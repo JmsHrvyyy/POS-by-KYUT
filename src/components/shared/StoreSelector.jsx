@@ -5,30 +5,7 @@ import { createStore, getStoresByManager, getAssignedStoreIds } from "../../serv
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../config/firebase";
 
-// Hardcoded/Mock Data para sa mga tindahan ng Manager (Frontend Checklist #3)
-const MOCK_STORES = [
-  {
-    id: "store_001",
-    name: "KYUT Sari-Sari Store",
-    industry_type: "Retail",
-    address: "Meycauayan, Bulacan",
-    isMock: true,
-  },
-  {
-    id: "store_002",
-    name: "KYUT Mini Cafe",
-    industry_type: "Food",
-    address: "Marilao, Bulacan",
-    isMock: true,
-  },
-  {
-    id: "store_003",
-    name: "KYUT Tech Services",
-    industry_type: "Services",
-    address: "Valenzuela City",
-    isMock: true,
-  },
-];
+
 
 export const StoreSelector = () => {
   const { activeStoreId, setActiveStoreId, userRole, currentUser } = useAuth();
@@ -53,8 +30,7 @@ export const StoreSelector = () => {
         setLoading(true);
         if (userRole === "manager") {
           const fetched = await getStoresByManager(currentUser.uid);
-          // Ipakita ang Mock + Real Stores sa manager para sa testing at dashboard view
-          setStores([...MOCK_STORES, ...fetched]);
+          setStores(fetched);
         } else if (userRole === "staff") {
           // Cashier/Staff: Hihilahin lamang ang stores kung saan siya assigned (walang mocks)
           const assignedIds = await getAssignedStoreIds(currentUser.uid);

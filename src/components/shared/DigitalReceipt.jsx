@@ -35,7 +35,96 @@ export const DigitalReceipt = () => {
   }, [orderId]);
 
   const handlePrint = () => {
-    window.print();
+    const orderDate = order.created_at?.toDate
+      ? order.created_at.toDate().toLocaleString("fil-PH", { dateStyle: "medium", timeStyle: "short" })
+      : new Date().toLocaleString("fil-PH", { dateStyle: "medium", timeStyle: "short" });
+
+    const receiptUrl = window.location.href;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(receiptUrl)}`;
+
+    const itemsHtml = order.items?.map((item) => `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div style="flex:1;padding-right:12px;">
+          <span style="font-weight:700;color:#0C0A09;display:block;">${item.name}</span>
+          <span style="font-size:10px;color:#57534E;">${item.quantity} x \u20B1${item.price.toFixed(2)}</span>
+        </div>
+        <span style="font-weight:700;color:#0C0A09;">\u20B1${(item.quantity * item.price).toFixed(2)}</span>
+      </div>
+    `).join("") || "";
+
+    const discountHtml = order.discount > 0 ? `
+      <div style="display:flex;justify-content:space-between;color:#F97316;">
+        <span>Discount (${order.discount}%):</span>
+        <span style="font-weight:700;">-\u20B1${((order.subtotal * order.discount) / 100).toFixed(2)}</span>
+      </div>
+    ` : "";
+
+    const printHtml = `
+      <!DOCTYPE html>
+      <html lang="tl">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Resibo - ${order.id}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Courier New', Courier, monospace; background: white; color: #000; }
+          .receipt { width: 80mm; margin: 0 auto; padding: 16px; }
+        </style>
+      </head>
+      <body>
+        <div class="receipt">
+          <div style="text-align:center;padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;">
+            <div style="font-size:20px;font-weight:900;color:#064E3B;letter-spacing:-0.5px;">POS-by-KYUT</div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#57534E;margin-top:4px;">Digital Store Receipt</div>
+            <div style="font-size:9px;color:#57534E;margin-top:8px;text-align:left;">
+              <div>STORE ID: ${order.store_id}</div>
+              <div>TXID: ${order.id}</div>
+              <div>DATE: ${orderDate}</div>
+            </div>
+          </div>
+
+          <div style="padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#57534E;margin-bottom:8px;">
+              <span>Mga Produkto</span><span>Halaga</span>
+            </div>
+            <div style="font-size:11px;">${itemsHtml}</div>
+          </div>
+
+          <div style="padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;font-size:11px;color:#57534E;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span>Subtotal:</span>
+              <span style="font-weight:700;color:#0C0A09;">\u20B1${order.subtotal?.toFixed(2)}</span>
+            </div>
+            ${discountHtml}
+            <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;color:#0C0A09;padding-top:8px;border-top:1px dashed #ccc;margin-top:6px;">
+              <span>KABUUANG HALAGA:</span>
+              <span style="color:#064E3B;">\u20B1${order.total?.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div style="text-align:center;font-size:9px;color:#57534E;padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;">
+            <div>Cashier: <strong>${order.cashier_name}</strong></div>
+            <div style="font-size:9px;color:#aaa;">ID: ${order.cashier_id}</div>
+            <div style="margin-top:6px;font-weight:700;color:#064E3B;">Maraming salamat sa inyong pagtangkilik!</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;align-items:center;padding-top:8px;">
+            <img src="${qrCodeUrl}" alt="QR Code" style="width:110px;height:110px;" />
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-top:6px;text-align:center;">I-scan para sa digital receipt</div>
+          </div>
+        </div>
+        <script>
+          window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; };
+        </scr` + `ipt>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank", "width=400,height=600");
+    if (printWindow) {
+      printWindow.document.write(printHtml);
+      printWindow.document.close();
+    }
   };
 
   if (loading) {
