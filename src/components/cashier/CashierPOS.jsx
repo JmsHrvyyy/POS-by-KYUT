@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "../shared/Navbar";
 import { useAuth } from "../../context/AuthContext";
+import { getProductsByStore, addProduct } from "../../services/productService";
 
 // Color gradients for different categories to make the grid pop visually
 const categoryGradients = {
@@ -101,6 +102,64 @@ export const CashierPOS = () => {
       setNotification(null);
     }, 3000);
     return () => clearTimeout(timer);
+  };
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      // Force asynchronous execution in the microtask queue to avoid synchronous setState inside useEffect
+      await Promise.resolve();
+
+      if (!activeStoreId) {
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError("");
+        const data = await getProductsByStore(activeStoreId);
+        setProducts(data);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+        setError("Hindi ma-load ang mga produkto. Subukan muli.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [activeStoreId]);
+
+  const handleSeedProducts = async () => {
+    if (!activeStoreId) return;
+    try {
+      setSeeding(true);
+      setError("");
+      
+      const seedItems = [
+        { name: "Coca-Cola 1.5L", price: 65, category: "Soda", stock: 12 },
+        { name: "Gardenia Classic Bread", price: 78, category: "Bakery", stock: 8 },
+        { name: "Piattos Cheese Big", price: 38, category: "Chips", stock: 25 },
+        { name: "Lucky Me Pancit Canton", price: 16, category: "Noodles", stock: 45 },
+        { name: "Kopiko Blanca Mix", price: 10, category: "Coffee", stock: 60 },
+        { name: "Purefoods Corned Beef", price: 85, category: "Canned Goods", stock: 15 }
+      ];
+
+      for (const item of seedItems) {
+        await addProduct(item, activeStoreId);
+      }
+
+      // Re-fetch products
+      const data = await getProductsByStore(activeStoreId);
+      setProducts(data);
+      alert("Matagumpay na na-seed ang mga sample products!");
+    } catch (err) {
+      console.error("Error seeding products:", err);
+      setError("Hindi ma-seed ang mga produkto. Subukan muli.");
+    } finally {
+      setSeeding(false);
+    }
   };
 
   const addToCart = (product) => {
