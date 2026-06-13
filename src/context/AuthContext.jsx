@@ -17,7 +17,18 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // GLOBAL STATE: Para sa napiling tindahan ng user (Frontend Checklist #4)
-  const [activeStoreId, setActiveStoreId] = useState(null);
+  const [activeStoreId, setActiveStoreId] = useState(() => {
+    return localStorage.getItem("active_store_id") || null;
+  });
+
+  // Awtomatikong sine-save ang activeStoreId sa localStorage para hindi mawala sa page refresh
+  useEffect(() => {
+    if (activeStoreId) {
+      localStorage.setItem("active_store_id", activeStoreId);
+    } else {
+      localStorage.removeItem("active_store_id");
+    }
+  }, [activeStoreId]);
 
   // Helper Function para sa Login (May catch sa dashboard/routing later)
   const login = (email, password) => {
