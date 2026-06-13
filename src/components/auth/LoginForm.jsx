@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { getDoc, doc } from "firebase/firestore";
-import { db } from "../config/firebase";
+import { db } from "../../config/firebase";
 
 export const LoginForm = () => {
   const { login } = useAuth();
