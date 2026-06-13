@@ -33,3 +33,29 @@
   display: flex;
   flex-direction: column;
 }
+
+/* Print styles for digital receipts */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt, #printable-receipt * {
+    visibility: visible;
+  }
+  #printable-receipt {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 380px; /* Standard thermal receipt width */
+    margin: 0;
+    padding: 16px;
+    box-shadow: none;
+    border: none;
+    background: white;
+    color: black;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
