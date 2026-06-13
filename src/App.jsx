@@ -12,6 +12,7 @@ import { StoreSelector } from "./components/shared/StoreSelector";
 import { UnauthorizedScreen } from "./components/cashier/UnauthorizedScreen";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { CashierPOS } from "./components/cashier/CashierPOS";
+import { DigitalReceipt } from "./components/shared/DigitalReceipt";
 
 export default function App() {
   return (
@@ -23,6 +24,9 @@ export default function App() {
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/unauthorized" element={<UnauthorizedScreen />} />
+
+          {/* Standalone Digital Receipt View (Public / Scannable) */}
+          <Route path="/receipt/:orderId" element={<DigitalReceipt />} />
 
           {/* Main Landing / Store Selection Route */}
           <Route path="/stores" element={<StoreSelector />} />

@@ -84,6 +84,8 @@ export const CashierPOS = () => {
   const [error, setError] = useState("");
   const [seeding, setSeeding] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [latestOrder, setLatestOrder] = useState(null);
 
   // Cart state & notification state
   const [cart, setCart] = useState([]);
@@ -246,6 +248,8 @@ export const CashierPOS = () => {
       const data = await getProductsByStore(activeStoreId);
       setProducts(data);
 
+      setLatestOrder(result);
+      setShowReceipt(true);
       showNotification(`Matagumpay ang Checkout! Order ID: ${result.id}`, "success");
       setCart([]);
     } catch (err) {
@@ -621,6 +625,138 @@ export const CashierPOS = () => {
         </div>
       )}
 
+      {/* Receipt Modal Overlay */}
+      {showReceipt && latestOrder && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto no-print">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-[#57534E]/10 animate-scaleIn flex flex-col items-center">
+            
+            {/* Modal Header */}
+            <div className="w-full flex justify-between items-center mb-4 pb-2 border-b border-[#57534E]/10">
+              <h3 className="font-bold text-[#064E3B] text-base flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Matagumpay na Bayad!
+              </h3>
+              <button 
+                onClick={() => {
+                  setShowReceipt(false);
+                  setLatestOrder(null);
+                }}
+                className="text-xs text-[#57534E] font-bold hover:underline cursor-pointer"
+              >
+                Isara
+              </button>
+            </div>
+
+            {/* Receipt Document Container */}
+            <div 
+              id="printable-receipt" 
+              className="w-full bg-white p-4 border border-dashed border-[#57534E]/30 rounded-xl flex flex-col text-xs font-sans text-black"
+            >
+              {/* Header */}
+              <div className="text-center pb-3 border-b border-dashed border-[#57534E]/20">
+                <span className="text-[#064E3B] font-extrabold text-xl tracking-tight block">
+                  POS-by-KYUT
+                </span>
+                <p className="text-[9px] font-bold text-[#57534E] uppercase tracking-wider mt-0.5">Store Receipt</p>
+                <div className="text-[9px] text-[#57534E]/80 mt-1.5 font-mono space-y-0.5 text-left">
+                  <div>STORE ID: {latestOrder.store_id}</div>
+                  <div>TXID: {latestOrder.id}</div>
+                  <div>DATE: {latestOrder.created_at?.toDate ? latestOrder.created_at.toDate().toLocaleString("fil-PH", { dateStyle: "short", timeStyle: "short" }) : new Date().toLocaleString("fil-PH", { dateStyle: "short", timeStyle: "short" })}</div>
+                </div>
+              </div>
+
+              {/* Items */}
+              <div className="py-3 border-b border-dashed border-[#57534E]/20">
+                <div className="font-bold text-[9px] uppercase text-[#57534E] tracking-wider mb-1.5 flex justify-between">
+                  <span>Produkto</span>
+                  <span>Halaga</span>
+                </div>
+                <div className="space-y-1.5 font-mono text-[11px]">
+                  {latestOrder.items?.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-start">
+                      <div className="flex-1 pr-3">
+                        <span className="font-bold text-black">{item.name}</span>
+                        <span className="text-[9px] text-[#57534E] block">
+                          {item.quantity} x ₱{item.price.toFixed(2)}
+                        </span>
+                      </div>
+                      <span className="font-bold text-black">
+                        ₱{(item.quantity * item.price).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Totals */}
+              <div className="py-3 border-b border-dashed border-[#57534E]/20 space-y-1 font-mono text-[11px] text-[#57534E]">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span className="font-bold text-black">₱{latestOrder.subtotal?.toFixed(2)}</span>
+                </div>
+                {latestOrder.discount > 0 && (
+                  <div className="flex justify-between text-[#F97316]">
+                    <span>Discount ({latestOrder.discount}%):</span>
+                    <span className="font-bold">-₱{((latestOrder.subtotal * latestOrder.discount) / 100).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-[12px] font-extrabold text-black pt-1.5 border-t border-dashed border-[#57534E]/10">
+                  <span>KABUUAN:</span>
+                  <span className="text-sm text-[#064E3B]">₱{latestOrder.total?.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Cashier & Thank You */}
+              <div className="py-3 text-center text-[9px] text-[#57534E]/80 border-b border-dashed border-[#57534E]/10">
+                <div>Cashier: <strong className="font-bold">{latestOrder.cashier_name}</strong></div>
+                <div className="mt-1.5 text-[#064E3B] font-bold">Maraming salamat po!</div>
+              </div>
+
+              {/* QR Code */}
+              <div className="pt-4 flex flex-col items-center justify-center text-center">
+                <div className="p-1.5 bg-white border border-[#57534E]/15 rounded-lg shadow-sm">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(
+                      `${window.location.origin}/receipt/${latestOrder.id}`
+                    )}`} 
+                    alt="Receipt QR" 
+                    className="w-24 h-24 select-none"
+                  />
+                </div>
+                <span className="text-[8px] uppercase font-bold text-[#57534E]/50 tracking-wider mt-2">
+                  Scan QR to view online receipt
+                </span>
+              </div>
+
+            </div>
+
+            {/* Modal Actions */}
+            <div className="mt-4 flex gap-2 w-full">
+              <button 
+                onClick={() => window.print()}
+                className="flex-1 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print
+              </button>
+              <button 
+                onClick={() => {
+                  setShowReceipt(false);
+                  setLatestOrder(null);
+                }}
+                className="flex-1 py-2.5 bg-white hover:bg-[#FAFAF9] text-[#57534E] font-bold rounded-xl text-xs transition border border-[#57534E]/25 text-center flex items-center justify-center cursor-pointer"
+              >
+                Bagong Order
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };
