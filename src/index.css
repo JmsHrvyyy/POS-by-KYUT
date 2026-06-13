@@ -3,13 +3,18 @@
 
 @theme {
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  
+
   /* Color Palette Configured from User Specifications */
-  --color-primary: #064E3B; /* Emerald 900 (Forest Green) */
-  --color-secondary: #57534E; /* Stone 600 (Earth-toned secondary) */
-  --color-accent: #F97316; /* Orange 500 (High-visibility warning/alerts) */
-  --color-neutral-bg: #FAFAF9; /* Stone 50 (Sand/Warm gray background) */
-  --color-neutral-text: #0C0A09; /* Stone 950 (Neutral text) */
+  --color-primary: #064E3B;
+  /* Emerald 900 (Forest Green) */
+  --color-secondary: #57534E;
+  /* Stone 600 (Earth-toned secondary) */
+  --color-accent: #F97316;
+  /* Orange 500 (High-visibility warning/alerts) */
+  --color-neutral-bg: #FAFAF9;
+  /* Stone 50 (Sand/Warm gray background) */
+  --color-neutral-text: #0C0A09;
+  /* Stone 950 (Neutral text) */
 }
 
 @layer base {
