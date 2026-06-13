@@ -1,4 +1,4 @@
-import { writeBatch, doc, collection, increment, serverTimestamp, query, where, getDocs, orderBy } from "firebase/firestore";
+import { writeBatch, doc, collection, increment, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { db } from "../config/firebase";
 
 /**
@@ -70,11 +70,19 @@ export const getOrdersByStore = async (storeId) => {
     const ordersRef = collection(db, "orders");
     const q = query(
       ordersRef,
-      where("store_id", "==", storeId),
-      orderBy("created_at", "desc")
+      where("store_id", "==", storeId)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const orders = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+    // Sort locally by created_at desc (newest first)
+    orders.sort((a, b) => {
+      const timeA = a.created_at?.toDate ? a.created_at.toDate().getTime() : (a.created_at ? new Date(a.created_at).getTime() : 0);
+      const timeB = b.created_at?.toDate ? b.created_at.toDate().getTime() : (b.created_at ? new Date(b.created_at).getTime() : 0);
+      return timeB - timeA;
+    });
+
+    return orders;
   } catch (error) {
     console.error("Error fetching orders by store:", error);
     throw error;

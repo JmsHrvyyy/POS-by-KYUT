@@ -576,6 +576,13 @@ export const AdminDashboard = () => {
             </div>
           )}
 
+          {/* ── POS TAB ── */}
+          {activeTab === "pos" && (
+            <div className="p-6">
+              <CashierPOS embedded={true} />
+            </div>
+          )}
+
         </div>
 
         {/* ── Store Settings (always visible below tabs) ── */}
