@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Navbar } from "../shared/Navbar";
 import { useAuth } from "../../context/AuthContext";
 import { getProductsByStore, addProduct } from "../../services/productService";
+import { placeOrder } from "../../services/orderService";
 
 // Color gradients for different categories to make the grid pop visually
 const categoryGradients = {
@@ -77,17 +78,12 @@ const renderCategoryIcon = (category) => {
 };
 
 export const CashierPOS = () => {
-  const { activeStoreId } = useAuth();
-
-  // Mock catalog of items
-  const catalog = [
-    { id: "item_001", name: "Coca-Cola 1.5L", price: 65, category: "Soda", stock: 12 },
-    { id: "item_002", name: "Gardenia Classic Bread", price: 78, category: "Bakery", stock: 8 },
-    { id: "item_003", name: "Piattos Cheese Big", price: 38, category: "Chips", stock: 25 },
-    { id: "item_004", name: "Lucky Me Pancit Canton", price: 16, category: "Noodles", stock: 45 },
-    { id: "item_005", name: "Kopiko Blanca Mix", price: 10, category: "Coffee", stock: 60 },
-    { id: "item_006", name: "Purefoods Corned Beef", price: 85, category: "Canned Goods", stock: 15 }
-  ];
+  const { activeStoreId, currentUser } = useAuth();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [seeding, setSeeding] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   // Cart state & notification state
   const [cart, setCart] = useState([]);
@@ -186,7 +182,7 @@ export const CashierPOS = () => {
   };
 
   const updateQuantity = (id, amount) => {
-    const product = catalog.find((p) => p.id === id);
+    const product = products.find((p) => p.id === id);
     if (!product) return;
 
     setCart((prev) =>
@@ -218,24 +214,57 @@ export const CashierPOS = () => {
   const discountAmount = (subtotal * discount) / 100;
   const total = subtotal - discountAmount;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) {
       showNotification("Mangyaring magdagdag muna ng produkto sa cart.", "error");
       return;
     }
-    alert(`Checkout success! Kabuuang halaga: ₱${total.toFixed(2)}. Nalikha ang shift transaction.`);
-    clearCart();
+
+    try {
+      setCheckoutLoading(true);
+
+      const orderData = {
+        store_id: activeStoreId,
+        items: cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          category: item.category
+        })),
+        subtotal,
+        discount,
+        total,
+        payment_method: "Cash",
+        cashier_id: currentUser?.uid || "unknown",
+        cashier_name: currentUser?.fullName || currentUser?.displayName || currentUser?.email || "Cashier"
+      };
+
+      const result = await placeOrder(orderData);
+
+      // Re-fetch products from Firestore to get updated stock levels
+      const data = await getProductsByStore(activeStoreId);
+      setProducts(data);
+
+      showNotification(`Matagumpay ang Checkout! Order ID: ${result.id}`, "success");
+      setCart([]);
+    } catch (err) {
+      console.error("Checkout failed:", err);
+      showNotification("Hindi ma-proseso ang checkout. Subukan muli.", "error");
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   // Category filtering options
   const categories = ["All", "Soda", "Bakery", "Chips", "Noodles", "Coffee", "Canned Goods"];
 
   // Filter and search logic
-  const filteredCatalog = catalog.filter((product) => {
+  const filteredCatalog = products.filter((product) => {
     const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
     const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+      (product.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.category || "").toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -308,8 +337,55 @@ export const CashierPOS = () => {
           </div>
 
           {/* Catalog Grid View */}
-          <div className="flex-1 overflow-y-auto max-h-[550px] pr-1 scrollbar-thin">
-            {filteredCatalog.length > 0 ? (
+          <div className="flex-1 overflow-y-auto max-h-[550px] pr-1 scrollbar-thin flex flex-col">
+            {loading ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-20">
+                <svg className="animate-spin h-8 w-8 text-[#064E3B]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p className="text-xs text-[#57534E] mt-3 font-semibold">Kinukuha ang mga produkto...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-16 text-[#F97316]">
+                <p className="text-sm font-bold">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()} 
+                  className="mt-3 px-4 py-2 bg-[#57534E] hover:bg-[#57534E]/90 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  I-refresh
+                </button>
+              </div>
+            ) : products.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-[#57534E]/10 rounded-2xl p-6 bg-[#FAFAF9]">
+                <div className="p-3.5 bg-[#57534E]/5 text-[#57534E]/60 rounded-full mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4.5m16 0h-16" />
+                  </svg>
+                </div>
+                <h3 className="font-extrabold text-sm text-[#0C0A09]">Walang Produkto sa Tindahang Ito</h3>
+                <p className="text-xs text-[#57534E] mt-1 max-w-[240px] leading-relaxed">
+                  Wala pang paninda ang tindahang ito sa database.
+                </p>
+                <button
+                  onClick={handleSeedProducts}
+                  disabled={seeding}
+                  className="mt-4 px-4 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 disabled:bg-[#064E3B]/70 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  {seeding ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Nagsi-seed...</span>
+                    </>
+                  ) : (
+                    <span>Mag-seed ng Sample Products</span>
+                  )}
+                </button>
+              </div>
+            ) : filteredCatalog.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
                 {filteredCatalog.map((product) => {
                   const isOutOfStock = product.stock <= 0;
@@ -326,7 +402,7 @@ export const CashierPOS = () => {
                       }`}
                     >
                       {/* Product Visual Container (Image/Icon) */}
-                      <div className={`aspect-video w-full rounded-xl flex items-center justify-center bg-gradient-to-br ${categoryGradients[product.category] || "from-stone-400 to-stone-600"} p-4 mb-4 relative overflow-hidden transition-transform duration-500 group-hover:scale-[1.02] shadow-sm`}>
+                      <div className={`aspect-video w-full rounded-xl flex items-center justify-center bg-gradient-to-br ${categoryGradients[product.category] || "from-rose-400 to-rose-600 shadow-rose-100"} p-4 mb-4 relative overflow-hidden transition-transform duration-500 group-hover:scale-[1.02] shadow-sm`}>
                         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         
                         {renderCategoryIcon(product.category)}
@@ -397,7 +473,7 @@ export const CashierPOS = () => {
                 })}
               </div>
             ) : (
-              <div className="text-center py-20 bg-[#FAFAF9] rounded-2xl border border-dashed border-[#57534E]/20">
+              <div className="text-center py-20 bg-[#FAFAF9] rounded-2xl border border-dashed border-[#57534E]/20 flex flex-col justify-center items-center">
                 <svg className="w-12 h-12 text-[#57534E]/40 mx-auto mb-3" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -495,12 +571,25 @@ export const CashierPOS = () => {
 
             <button 
               onClick={handleCheckout}
-              className="w-full bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold py-3.5 rounded-xl transition duration-200 shadow-md cursor-pointer mt-4 flex items-center justify-center gap-2 hover:shadow-lg active:scale-[0.99]"
+              disabled={checkoutLoading}
+              className="w-full bg-[#064E3B] hover:bg-[#064E3B]/90 disabled:opacity-75 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition duration-200 shadow-md cursor-pointer mt-4 flex items-center justify-center gap-2 hover:shadow-lg active:scale-[0.99]"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              Iproseso ang Bayad
+              {checkoutLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Pinoproseso ang Bayad...</span>
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <span>Iproseso ang Bayad</span>
+                </>
+              )}
             </button>
           </div>
 
