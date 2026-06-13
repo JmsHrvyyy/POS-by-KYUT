@@ -6,51 +6,12 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import { SignupForm } from "./components/SignupForm";
-
-// 1. I-import ang mga bagong likhang UI components (Frontend Checklist #1, #2, #3)
-import { LoginForm } from "./components/LoginForm";
-import { StoreSelector } from "./components/StoreSelector";
-
-// Mock components para sa mga natitirang protektadong screens ng Sprint 1
-const UnauthorizedScreen = () => (
-  <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center p-6 text-center font-sans">
-    <div className="bg-white p-6 rounded-xl shadow-md border border-[#57534E]/10 max-w-sm">
-      <h2 className="text-xl font-bold text-[#F97316] mb-2">Access Pending</h2>
-      <p className="text-sm text-[#57534E]">
-        Account Pending: Awaiting Invitation or Access Restriction. Mangyaring
-        mag-antay ng imbitasyon mula sa iyong Manager.
-      </p>
-    </div>
-  </div>
-);
-
-const AdminDashboard = () => (
-  <div className="min-h-screen bg-[#FAFAF9] font-sans text-[#0C0A09]">
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-[#064E3B] mb-2">
-        Admin/Manager Operations Dashboard
-      </h1>
-      <p className="text-sm text-[#57534E]">
-        Dito ilalagay ang Inventory CRUD at Analytics sa mga susunod na Sprint.
-      </p>
-    </div>
-  </div>
-);
-
-const CashierPOS = () => (
-  <div className="min-h-screen bg-[#FAFAF9] font-sans text-[#0C0A09]">
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-[#064E3B] mb-2">
-        Cashier POS Operations Screen
-      </h1>
-      <p className="text-sm text-[#57534E]">
-        Dito ilalagay ang Cart Processing at Camera Barcode Scanning sa susunod
-        na hakbang.
-      </p>
-    </div>
-  </div>
-);
+import { SignupForm } from "./components/auth/SignupForm";
+import { LoginForm } from "./components/auth/LoginForm";
+import { StoreSelector } from "./components/shared/StoreSelector";
+import { UnauthorizedScreen } from "./components/cashier/UnauthorizedScreen";
+import { AdminDashboard } from "./components/admin/AdminDashboard";
+import { CashierPOS } from "./components/cashier/CashierPOS";
 
 export default function App() {
   return (
@@ -58,12 +19,12 @@ export default function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Routes - Pinalitan natin ang mga luma mong Placeholder ng Actual Forms */}
+          {/* Public Routes */}
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/unauthorized" element={<UnauthorizedScreen />} />
 
-          {/* Main Landing / Store Selection Route - Ipinasok ang ating Responsive Selector View */}
+          {/* Main Landing / Store Selection Route */}
           <Route path="/stores" element={<StoreSelector />} />
 
           {/* Role-Specific Protected Routes */}
