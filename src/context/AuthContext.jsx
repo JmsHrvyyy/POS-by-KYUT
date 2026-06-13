@@ -1,3 +1,4 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../config/firebase";
 import {
@@ -12,46 +13,42 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [userRole, setUserRole] = useState(null); // 'manager' o 'staff'
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper Function para sa Sign Up (Backend Checklist #2)
+  // GLOBAL STATE: Para sa napiling tindahan ng user (Frontend Checklist #4)
+  const [activeStoreId, setActiveStoreId] = useState(null);
+
+  // Helper Function para sa Login (May catch sa dashboard/routing later)
+  const login = (email, password) => {
+    return signInWithEmailAndPassword(auth, email, password);
+  };
+
   const signup = async (email, password, fullName, role) => {
-    // 1. Gagawa ng user sa Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
       password,
     );
     const user = userCredential.user;
-
-    // 2. Magpapasok ng kaukulang data sa 'users' collection sa Firestore
     await setDoc(doc(db, "users", user.uid), {
       uid: user.uid,
       name: fullName,
       email: email,
-      global_role: role, // 'manager' o 'staff'
+      global_role: role,
     });
-
     return user;
   };
 
-  // Helper Function para sa Login (Backend Checklist #3)
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
-  };
-
-  // Helper Function para sa Logout
   const logout = () => {
+    setActiveStoreId(null); // I-clear ang active store kapag nag-logout
     return signOut(auth);
   };
 
-  // Session Observer para manatiling naka-login (Backend Checklist #3)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setCurrentUser(user);
-        // Kukunin ang role ng user mula sa Firestore kapag nag-login o nag-refresh
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           setUserRole(userDoc.data().global_role);
@@ -62,13 +59,14 @@ export const AuthProvider = ({ children }) => {
       }
       setLoading(false);
     });
-
     return unsubscribe;
   }, []);
 
   const value = {
     currentUser,
     userRole,
+    activeStoreId, // I-eexport para magamit sa Store Selector Grid
+    setActiveStoreId, // Function para baguhin ang napiling store
     signup,
     login,
     logout,

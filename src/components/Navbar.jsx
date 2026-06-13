@@ -1,44 +1,63 @@
-// Mobile-First Responsive Sidebar/Navbar Component
+// src/components/Navbar.jsx
 import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export const Navbar = () => {
-  // State para sa pag-open at pag-close ng menu sa mobile view
   const [isOpen, setIsOpen] = useState(false);
+  const { logout, userRole, activeStoreId } = useAuth();
 
   return (
-    <nav className="bg-[#064E3B] text-white font-sans shadow-md w-full">
-      {/* Container: Flex layout para sa alignment ng items */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="bg-[#064E3B] text-white font-sans shadow-md w-full sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* App Branding/Title */}
-          <div className="flex-shrink-0 flex items-center">
-            <span className="font-bold text-lg tracking-wide">POS-by-KYUT</span>
+          {/* Logo at Status Badges */}
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-lg tracking-wide">KYUT POS</span>
+            {userRole && (
+              <span className="bg-[#57534E] text-xs uppercase px-2 py-0.5 rounded font-semibold tracking-wider">
+                {userRole}
+              </span>
+            )}
           </div>
 
-          {/* Desktop Menu Options (Hidden sa small screens / phones) */}
-          <div className="hidden md:flex space-x-4">
+          {/* Desktop Menu Links (Nakatago sa mobile) */}
+          <div className="hidden md:flex items-center space-x-4 text-sm font-medium">
             <a
               href="/stores"
-              className="hover:bg-[#57534E] px-3 py-2 rounded-md text-sm font-medium transition"
+              className="hover:bg-[#57534E] px-3 py-2 rounded-md transition"
             >
-              Tindahan
+              Mga Tindahan
             </a>
-            <a
-              href="/login"
-              className="bg-[#57534E] hover:bg-[#57534E]/80 px-3 py-2 rounded-md text-sm font-medium transition"
+            {userRole === "manager" && (
+              <a
+                href="/admin/dashboard"
+                className="hover:bg-[#57534E] px-3 py-2 rounded-md transition"
+              >
+                Admin View
+              </a>
+            )}
+            {activeStoreId && (
+              <a
+                href="/cashier/pos"
+                className="hover:bg-[#57534E] px-3 py-2 rounded-md transition"
+              >
+                POS Screen
+              </a>
+            )}
+            <button
+              onClick={logout}
+              className="bg-[#57534E] hover:bg-[#57534E]/80 px-3 py-2 rounded-md transition"
             >
               Logout
-            </a>
+            </button>
           </div>
 
-          {/* Burger Menu Button (Visible LANG sa mobile/small screens) */}
+          {/* Burger Button para sa Cellphone (Mobile View Trigger) */}
           <div className="md:hidden flex items-center">
             <button
-              onClick={() => setIsOpen(!isOpen)} // Toggle operation para sa menu panel
-              type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-[#57534E] focus:outline-none"
+              onClick={() => setIsOpen(!isOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md hover:bg-[#57534E] focus:outline-none"
             >
-              {/* SVG Icon: Nagbabago ang hitsura (X o Burger) base sa value ng isOpen */}
               {isOpen ? (
                 <svg
                   className="h-6 w-6"
@@ -73,22 +92,38 @@ export const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Drawer Panel: Lalabas lang kapag true ang isOpen value */}
+      {/* Mobile Menu Panel Drawer (Lalabas lang pag clinick ang burger menu) */}
       <div
-        className={`${isOpen ? "block" : "hidden"} md:hidden bg-[#064E3B] border-t border-[#57534E]/30 px-2 pt-2 pb-3 space-y-1`}
+        className={`${isOpen ? "block" : "hidden"} md:hidden bg-[#064E3B] border-t border-[#57534E]/30 px-4 pt-2 pb-4 space-y-1 text-sm`}
       >
         <a
           href="/stores"
-          className="block hover:bg-[#57534E] px-3 py-2 rounded-md text-base font-medium"
+          className="block hover:bg-[#57534E] px-3 py-2 rounded-md"
         >
-          Tindahan
+          Mga Tindahan
         </a>
-        <a
-          href="/login"
-          className="block bg-[#57534E] px-3 py-2 rounded-md text-base font-medium text-center"
+        {userRole === "manager" && (
+          <a
+            href="/admin/dashboard"
+            className="block hover:bg-[#57534E] px-3 py-2 rounded-md"
+          >
+            Admin View
+          </a>
+        )}
+        {activeStoreId && (
+          <a
+            href="/cashier/pos"
+            className="block hover:bg-[#57534E] px-3 py-2 rounded-md"
+          >
+            POS Screen
+          </a>
+        )}
+        <button
+          onClick={logout}
+          className="w-full text-left bg-[#57534E] hover:bg-[#57534E]/80 px-3 py-2 rounded-md mt-2"
         >
           Logout
-        </a>
+        </button>
       </div>
     </nav>
   );
