@@ -245,8 +245,14 @@ export const AdminDashboard = () => {
             <p className="text-sm text-[#57534E] mt-1">Pamahalaan ang inventory, sales tracking, at cashier shifts ng iyong tindahan.</p>
           </div>
           {activeStoreId && (
-            <div className="bg-[#064E3B]/10 text-[#064E3B] border border-[#064E3B]/20 px-4 py-2 rounded-xl text-xs font-mono font-bold self-start">
-              Active Store Session: {activeStoreId}
+            <div className="flex items-center gap-2 bg-[#064E3B]/10 text-[#064E3B] border border-[#064E3B]/20 px-4 py-2.5 rounded-xl text-xs font-mono font-bold self-start shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#064E3B] animate-ping" />
+              Store ID: {activeStoreId}
+              {isMock && (
+                <span className="ml-2 bg-[#57534E]/20 text-[#57534E] px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider">
+                  Mock
+                </span>
+              )}
             </div>
           )}
         </header>
