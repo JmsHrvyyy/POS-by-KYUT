@@ -1,10 +1,10 @@
-import { writeBatch, doc, collection, increment, serverTimestamp } from "firebase/firestore";
+import { writeBatch, doc, collection, increment, serverTimestamp, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "../config/firebase";
 
 /**
  * Magsusulat ng bagong order sa 'orders' collection at babawasan ang stock_quantity ng kaukulang produkto.
  * Gumagamit ng Firestore Batch Writes para masiguradong atomic ang transaksyon.
- * 
+ *
  * @param {Object} orderData - Detalye ng order (store_id, items, subtotal, discount, total, cashier_id, cashier_name, payment_method, atbp.).
  * @returns {Promise<Object>} - Nilikhang order data kasama ang document ID nito.
  */
@@ -40,7 +40,7 @@ export const placeOrder = async (orderData) => {
       const productDocRef = doc(db, "products", item.id);
       // Babawasan ang 'stock' field base sa quantity ng binili
       batch.update(productDocRef, {
-        stock: increment(-item.quantity)
+        stock: increment(-item.quantity),
       });
     });
 
@@ -53,6 +53,30 @@ export const placeOrder = async (orderData) => {
     };
   } catch (error) {
     console.error("Error placing order and deducting stock:", error);
+    throw error;
+  }
+};
+
+/**
+ * Kunin ang lahat ng orders para sa isang store, pinagsunod-sunod mula pinakabago.
+ *
+ * @param {string} storeId - Ang store_id ng aktibong tindahan.
+ * @returns {Promise<Array>} - Listahan ng mga order documents.
+ */
+export const getOrdersByStore = async (storeId) => {
+  if (!storeId) return [];
+
+  try {
+    const ordersRef = collection(db, "orders");
+    const q = query(
+      ordersRef,
+      where("store_id", "==", storeId),
+      orderBy("created_at", "desc")
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  } catch (error) {
+    console.error("Error fetching orders by store:", error);
     throw error;
   }
 };
