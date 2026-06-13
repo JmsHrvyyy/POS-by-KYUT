@@ -1,5 +1,4 @@
 // src/components/StoreSelector.jsx
-import React from "react";
 import { useAuth } from "../context/AuthContext";
 import { Navbar } from "./Navbar";
 

@@ -1,5 +1,4 @@
 // Main Application Component with Routing
-import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
