@@ -1,23 +1,76 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "../shared/Navbar";
 import { useAuth } from "../../context/AuthContext";
+import { getProductsByStore, addProduct } from "../../services/productService";
 
 export const CashierPOS = () => {
   const { activeStoreId } = useAuth();
-
-  // Mock catalog of items
-  const catalog = [
-    { id: "item_001", name: "Coca-Cola 1.5L", price: 65, category: "Soda", stock: 12 },
-    { id: "item_002", name: "Gardenia Classic Bread", price: 78, category: "Bakery", stock: 8 },
-    { id: "item_003", name: "Piattos Cheese Big", price: 38, category: "Chips", stock: 25 },
-    { id: "item_004", name: "Lucky Me Pancit Canton", price: 16, category: "Noodles", stock: 45 },
-    { id: "item_005", name: " Kopiko Blanca Mix", price: 10, category: "Coffee", stock: 60 },
-    { id: "item_006", name: "Purefoods Corned Beef", price: 85, category: "Canned Goods", stock: 15 }
-  ];
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [seeding, setSeeding] = useState(false);
 
   // Cart state
   const [cart, setCart] = useState([]);
   const [discount, setDiscount] = useState(0); // in percent
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      // Force asynchronous execution in the microtask queue to avoid synchronous setState inside useEffect
+      await Promise.resolve();
+
+      if (!activeStoreId) {
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError("");
+        const data = await getProductsByStore(activeStoreId);
+        setProducts(data);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+        setError("Hindi ma-load ang mga produkto. Subukan muli.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [activeStoreId]);
+
+  const handleSeedProducts = async () => {
+    if (!activeStoreId) return;
+    try {
+      setSeeding(true);
+      setError("");
+      
+      const seedItems = [
+        { name: "Coca-Cola 1.5L", price: 65, category: "Soda", stock: 12 },
+        { name: "Gardenia Classic Bread", price: 78, category: "Bakery", stock: 8 },
+        { name: "Piattos Cheese Big", price: 38, category: "Chips", stock: 25 },
+        { name: "Lucky Me Pancit Canton", price: 16, category: "Noodles", stock: 45 },
+        { name: "Kopiko Blanca Mix", price: 10, category: "Coffee", stock: 60 },
+        { name: "Purefoods Corned Beef", price: 85, category: "Canned Goods", stock: 15 }
+      ];
+
+      for (const item of seedItems) {
+        await addProduct(item, activeStoreId);
+      }
+
+      // Re-fetch products
+      const data = await getProductsByStore(activeStoreId);
+      setProducts(data);
+      alert("Matagumpay na na-seed ang mga sample products!");
+    } catch (err) {
+      console.error("Error seeding products:", err);
+      setError("Hindi ma-seed ang mga produkto. Subukan muli.");
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const addToCart = (product) => {
     setCart((prev) => {
@@ -82,24 +135,73 @@ export const CashierPOS = () => {
           </div>
 
           {/* Catalog Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 overflow-y-auto max-h-[500px] pr-2">
-            {catalog.map((product) => (
-              <div 
-                key={product.id}
-                onClick={() => addToCart(product)}
-                className="p-4 rounded-xl border border-[#57534E]/15 bg-[#FAFAF9] hover:bg-[#064E3B]/5 hover:border-[#064E3B]/45 cursor-pointer transition-all duration-200 flex flex-col justify-between hover:scale-[1.01]"
+          {loading ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-16">
+              <svg className="animate-spin h-8 w-8 text-[#064E3B]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="text-xs text-[#57534E] mt-3">Kinukuha ang mga produkto...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 text-[#F97316]">
+              <p className="text-sm font-bold">{error}</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-3 px-4 py-2 bg-[#57534E] hover:bg-[#57534E]/90 text-white rounded-xl text-xs font-bold transition cursor-pointer"
               >
-                <div>
-                  <span className="text-[9px] uppercase font-bold tracking-wider text-[#57534E]/60">{product.category}</span>
-                  <h4 className="font-extrabold text-sm text-[#0C0A09] mt-0.5 line-clamp-2">{product.name}</h4>
-                </div>
-                <div className="flex justify-between items-center mt-4">
-                  <span className="font-extrabold text-[#064E3B] text-base">₱{product.price}</span>
-                  <span className="text-[10px] text-[#57534E]/70">Stock: {product.stock}</span>
-                </div>
+                I-refresh
+              </button>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-[#57534E]/10 rounded-2xl p-6 bg-[#FAFAF9]">
+              <div className="p-3.5 bg-[#57534E]/5 text-[#57534E]/60 rounded-full mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4.5m16 0h-16" />
+                </svg>
               </div>
-            ))}
-          </div>
+              <h3 className="font-extrabold text-sm text-[#0C0A09]">Walang Produkto sa Tindahang Ito</h3>
+              <p className="text-xs text-[#57534E] mt-1 max-w-[240px] leading-relaxed">
+                Wala pang paninda ang tindahang ito sa database.
+              </p>
+              <button
+                onClick={handleSeedProducts}
+                disabled={seeding}
+                className="mt-4 px-4 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 disabled:bg-[#064E3B]/70 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                {seeding ? (
+                  <>
+                    <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Nagsi-seed...</span>
+                  </>
+                ) : (
+                  <span>Mag-seed ng Sample Products</span>
+                )}
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 overflow-y-auto max-h-[500px] pr-2">
+              {products.map((product) => (
+                <div 
+                  key={product.id}
+                  onClick={() => addToCart(product)}
+                  className="p-4 rounded-xl border border-[#57534E]/15 bg-[#FAFAF9] hover:bg-[#064E3B]/5 hover:border-[#064E3B]/45 cursor-pointer transition-all duration-200 flex flex-col justify-between hover:scale-[1.01]"
+                >
+                  <div>
+                    <span className="text-[9px] uppercase font-bold tracking-wider text-[#57534E]/60">{product.category}</span>
+                    <h4 className="font-extrabold text-sm text-[#0C0A09] mt-0.5 line-clamp-2">{product.name}</h4>
+                  </div>
+                  <div className="flex justify-between items-center mt-4">
+                    <span className="font-extrabold text-[#064E3B] text-base">₱{product.price}</span>
+                    <span className="text-[10px] text-[#57534E]/70">Stock: {product.stock}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Side: POS Checkout Cart */}
