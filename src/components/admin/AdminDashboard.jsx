@@ -278,10 +278,11 @@ export const AdminDashboard = () => {
                 key={tab.key}
                 id={`admin-tab-${tab.key}`}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all duration-200 cursor-pointer border-b-2 -mb-px ${activeTab === tab.key
+                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all duration-200 cursor-pointer border-b-2 -mb-px ${
+                  activeTab === tab.key
                     ? "border-[#064E3B] text-[#064E3B] bg-white"
                     : "border-transparent text-[#57534E]/70 hover:text-[#57534E] hover:bg-white/60"
-                  }`}
+                }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -391,10 +392,11 @@ export const AdminDashboard = () => {
                         <td className="py-3.5 text-[#57534E] font-medium">{staff.role}</td>
                         <td className="py-3.5 text-[#57534E] font-mono">{staff.email}</td>
                         <td className="py-3.5 text-right">
-                          <span className={`inline-block px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${staff.status === "Active" ? "bg-emerald-500/10 text-emerald-700"
-                              : staff.status === "On Break" ? "bg-amber-500/10 text-amber-700"
-                                : "bg-[#57534E]/10 text-[#57534E]"
-                            }`}>
+                          <span className={`inline-block px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
+                            staff.status === "Active" ? "bg-emerald-500/10 text-emerald-700"
+                            : staff.status === "On Break" ? "bg-amber-500/10 text-amber-700"
+                            : "bg-[#57534E]/10 text-[#57534E]"
+                          }`}>
                             {staff.status}
                           </span>
                         </td>
