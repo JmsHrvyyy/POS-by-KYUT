@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../config/firebase";
 
 /**
@@ -40,23 +40,46 @@ export const getStoresByManager = async (managerUid) => {
  * @param {string} staffUid - Ang UID ng naka-login na Staff/Cashier.
  * @returns {Promise<Array<string>>} - Listahan ng mga store_id.
  */
-export const getAssignedStoreIds = async (staffUid) => {
+export const getAssignedStoreIds = async (staffUid, staffEmail = "") => {
   if (!staffUid) {
     throw new Error("Staff UID is required to fetch assigned stores.");
   }
 
   try {
     const storeStaffRef = collection(db, "store_staff");
-    const q = query(storeStaffRef, where("cashier_id", "==", staffUid));
-    const querySnapshot = await getDocs(q);
-
     const storeIds = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data.store_id) {
-        storeIds.push(data.store_id);
+
+    if (staffEmail) {
+      const qEmail = query(storeStaffRef, where("email", "==", staffEmail.trim()));
+      const querySnapshot = await getDocs(qEmail);
+
+      for (const d of querySnapshot.docs) {
+        const data = d.data();
+        // Kung pending o iba ang cashier_id, i-link ito sa bagong UID
+        if (data.cashier_id !== staffUid) {
+          const docRef = doc(db, "store_staff", d.id);
+          await updateDoc(docRef, {
+            cashier_id: staffUid,
+            status: "Active"
+          });
+        }
+        if (data.store_id) {
+          storeIds.push(data.store_id);
+        }
       }
-    });
+    }
+
+    // Kung walang nahanap gamit ang email, fallback sa paghahanap gamit ang cashier_id
+    if (storeIds.length === 0) {
+      const qUid = query(storeStaffRef, where("cashier_id", "==", staffUid));
+      const querySnapshot = await getDocs(qUid);
+      querySnapshot.forEach((d) => {
+        const data = d.data();
+        if (data.store_id) {
+          storeIds.push(data.store_id);
+        }
+      });
+    }
 
     return storeIds;
   } catch (error) {

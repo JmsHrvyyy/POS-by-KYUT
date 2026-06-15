@@ -33,7 +33,7 @@ export const StoreSelector = () => {
           setStores(fetched);
         } else if (userRole === "staff") {
           // Cashier/Staff: Hihilahin lamang ang stores kung saan siya assigned (walang mocks)
-          const assignedIds = await getAssignedStoreIds(currentUser.uid);
+          const assignedIds = await getAssignedStoreIds(currentUser.uid, currentUser.email);
           if (assignedIds.length === 0) {
             setStores([]);
           } else {

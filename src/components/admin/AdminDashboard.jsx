@@ -84,6 +84,7 @@ export const AdminDashboard = () => {
   const [savingStaff, setSavingStaff] = useState(false);
   const [staffError, setStaffError] = useState("");
   const [staffSuccess, setStaffSuccess] = useState("");
+  const [invitationInfo, setInvitationInfo] = useState(null);
 
   // ── Toast State ───────────────────────────────────────────────
   const [toast, setToast] = useState(null);
@@ -261,8 +262,6 @@ export const AdminDashboard = () => {
       // I-update sa Firestore cloud
       const docRef = doc(
         db,
-        "stores",
-        activeStoreId,
         "products",
         selectedProduct.id,
       );
@@ -302,8 +301,6 @@ export const AdminDashboard = () => {
       setSavingProd(true);
       const docRef = doc(
         db,
-        "stores",
-        activeStoreId,
         "products",
         selectedProduct.id,
       );
@@ -344,7 +341,7 @@ export const AdminDashboard = () => {
     if (!seguro) return;
 
     try {
-      const docRef = doc(db, "stores", activeStoreId, "products", product.id);
+      const docRef = doc(db, "products", product.id);
       await deleteDoc(docRef);
 
       // Alisin sa screen filter array
@@ -377,69 +374,134 @@ export const AdminDashboard = () => {
       ]);
       showToast("Naidagdag ang staff (Mock Mode)!");
       setIsAddStaffOpen(false);
+
+      const signupLink = `${window.location.origin}/signup`;
+      setInvitationInfo({
+        email: staffEmail.trim(),
+        exists: false,
+        subject: "Imbitasyon sa POS-by-KYUT (Demo)",
+        body: `Kamusta!\n\nInaanyayahan ka naming maging staff para sa aming tindahan (Store ID: ${activeStoreId}).\n\nDahil wala ka pang account sa aming system, mangyaring gumawa muna ng account bilang Staff/Cashier gamit ang link na ito:\n${signupLink}\n\nGamitin ang email na ito sa pag-signup para ma-link ang iyong account sa aming tindahan.\n\nSalamat!`,
+      });
       setStaffEmail("");
       return;
     }
     try {
       setSavingStaff(true);
-      const userSnap = await getDocs(
-        query(collection(db, "users"), where("email", "==", staffEmail.trim())),
-      );
-      if (userSnap.empty) {
-        setStaffError(
-          "Hindi nahanap ang email. Dapat registered muna sila bilang Staff sa signup.",
-        );
-        return;
-      }
-      let foundUser = null;
-      userSnap.forEach((d) => {
-        foundUser = { uid: d.id, ...d.data() };
-      });
-      if (foundUser.global_role !== "staff") {
-        setStaffError("Ang account na ito ay hindi Staff.");
-        return;
-      }
+
+      // Check duplicates by email
       const dupeSnap = await getDocs(
         query(
           collection(db, "store_staff"),
           where("store_id", "==", activeStoreId),
-          where("cashier_id", "==", foundUser.uid),
+          where("email", "==", staffEmail.trim()),
         ),
       );
       if (!dupeSnap.empty) {
-        setStaffError("Ang staff na ito ay nakatalaga na rito.");
+        setStaffError("Ang staff na ito ay nakatalaga na rito (o may pending invite).");
         return;
       }
 
-      const docRef = await addDoc(collection(db, "store_staff"), {
-        store_id: activeStoreId,
-        cashier_id: foundUser.uid,
-        name: foundUser.name ?? staffEmail,
-        email: foundUser.email ?? staffEmail,
-        role: staffRole,
-        status: "Active",
-        created_at: serverTimestamp(),
+      // Check if user account already exists in DB
+      const userSnap = await getDocs(
+        query(collection(db, "users"), where("email", "==", staffEmail.trim())),
+      );
+
+      let foundUser = null;
+      userSnap.forEach((d) => {
+        foundUser = { uid: d.id, ...d.data() };
       });
+
+      let staffPayload = {};
+      let signupInstructions = "";
+      let emailSubject = "";
+      let hasAccount = false;
+
+      if (!foundUser) {
+        // User does not exist - add as Pending
+        staffPayload = {
+          store_id: activeStoreId,
+          cashier_id: "pending",
+          name: staffEmail.split("@")[0],
+          email: staffEmail.trim(),
+          role: staffRole,
+          status: "Pending",
+          created_at: serverTimestamp(),
+        };
+
+        emailSubject = "Imbitasyon sa POS-by-KYUT";
+        signupInstructions = `Kamusta!\n\nInaanyayahan ka naming maging staff para sa aming tindahan (Store ID: ${activeStoreId}).\n\nDahil wala ka pang account sa aming system, mangyaring gumawa muna ng account bilang Staff/Cashier gamit ang link na ito:\n${window.location.origin}/signup\n\nSiguraduhing gamitin ang email na ito sa pag-signup para ma-link ang iyong account sa aming tindahan.\n\nSalamat!`;
+      } else {
+        // User exists
+        if (foundUser.global_role !== "staff") {
+          setStaffError("Ang account na ito ay rehistrado pero hindi Staff (Manager/Owner ito).");
+          return;
+        }
+
+        hasAccount = true;
+        staffPayload = {
+          store_id: activeStoreId,
+          cashier_id: foundUser.uid,
+          name: foundUser.name ?? staffEmail.split("@")[0],
+          email: staffEmail.trim(),
+          role: staffRole,
+          status: "Active",
+          created_at: serverTimestamp(),
+        };
+
+        emailSubject = "Itinalaga ka bilang Staff sa POS-by-KYUT";
+        signupInstructions = `Kamusta!\n\nItinalaga ka na bilang staff para sa aming tindahan (Store ID: ${activeStoreId}).\n\nMangyaring mag-login sa iyong account dito para simulan ang paggamit ng POS:\n${window.location.origin}/login\n\nSalamat!`;
+      }
+
+      const docRef = await addDoc(collection(db, "store_staff"), staffPayload);
+
       setStaffList((prev) => [
         ...prev,
         {
           id: docRef.id,
-          store_id: activeStoreId,
-          cashier_id: foundUser.uid,
-          name: foundUser.name ?? staffEmail,
-          email: foundUser.email ?? staffEmail,
-          role: staffRole,
-          status: "Active",
+          ...staffPayload,
         },
       ]);
-      showToast(`Matagumpay na naidagdag si ${foundUser.name ?? staffEmail}!`);
+
+      showToast(`Matagumpay na naidagdag si ${staffPayload.name}!`);
       setIsAddStaffOpen(false);
+
+      // Display the instructions modal to copy / send email
+      setInvitationInfo({
+        email: staffEmail.trim(),
+        exists: hasAccount,
+        subject: emailSubject,
+        body: signupInstructions,
+      });
+
       setStaffEmail("");
     } catch (err) {
       console.error(err);
-      setStaffError("May naganap na error.");
+      setStaffError("May naganap na error habang nagdadagdag ng staff.");
     } finally {
       setSavingStaff(false);
+    }
+  };
+
+  // Change Staff Role in Database or local mock state
+  const handleUpdateStaffRole = async (staff, newRole) => {
+    if (isMockStore(activeStoreId)) {
+      setStaffList((prev) =>
+        prev.map((s) => (s.email === staff.email ? { ...s, role: newRole } : s))
+      );
+      showToast(`Role ng staff na si ${staff.name} ay binago sa ${newRole}!`);
+      return;
+    }
+
+    try {
+      const docRef = doc(db, "store_staff", staff.id);
+      await updateDoc(docRef, { role: newRole });
+      setStaffList((prev) =>
+        prev.map((s) => (s.id === staff.id ? { ...s, role: newRole } : s))
+      );
+      showToast(`Role ng staff na si ${staff.name} ay binago sa ${newRole}!`);
+    } catch (err) {
+      console.error("handleUpdateStaffRole error:", err);
+      showToast("Hindi ma-update ang role ng staff.", "error");
     }
   };
 
@@ -784,6 +846,7 @@ export const AdminDashboard = () => {
                       <th className="pb-3">Pangalan</th>
                       <th className="pb-3">Role</th>
                       <th className="pb-3">Email</th>
+                      <th className="pb-3">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#57534E]/5">
@@ -791,10 +854,29 @@ export const AdminDashboard = () => {
                       <tr key={i}>
                         <td className="py-3.5 font-bold">{s.name}</td>
                         <td className="py-3.5 text-[#57534E] font-medium">
-                          {s.role}
+                          <select
+                            value={s.role}
+                            onChange={(e) => handleUpdateStaffRole(s, e.target.value)}
+                            className="bg-stone-50 border border-stone-200 rounded px-2 py-1 text-xs font-semibold focus:outline-none focus:border-[#064E3B] cursor-pointer"
+                          >
+                            <option value="Cashier">Cashier</option>
+                            <option value="Head Cashier">Head Cashier</option>
+                            <option value="Admin">Admin</option>
+                          </select>
                         </td>
                         <td className="py-3.5 text-[#57534E] font-mono">
                           {s.email}
+                        </td>
+                        <td className="py-3.5">
+                          <span
+                            className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              s.status === "Active"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {s.status || "Active"}
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -1241,6 +1323,7 @@ export const AdminDashboard = () => {
                 >
                   <option value="Cashier">Cashier</option>
                   <option value="Head Cashier">Head Cashier</option>
+                  <option value="Admin">Admin</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-4">
@@ -1259,6 +1342,75 @@ export const AdminDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: STAFF INVITATION INSTRUCTIONS ── */}
+      {invitationInfo && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-stone-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-[#064E3B]">
+                {invitationInfo.exists ? "Itinalaga bilang Staff" : "Imbitasyon sa Staff"}
+              </h2>
+              <button
+                onClick={() => setInvitationInfo(null)}
+                className="text-stone-400 font-bold hover:text-stone-600 transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-xs text-stone-600 leading-relaxed">
+                {invitationInfo.exists ? (
+                  <>
+                    Ang email na <strong className="text-stone-900">{invitationInfo.email}</strong> ay mayroon nang account. Maaari mo silang padalhan ng abiso na mag-login sa kanilang account para magbukas ang POS.
+                  </>
+                ) : (
+                  <>
+                    Ang email na <strong className="text-stone-900">{invitationInfo.email}</strong> ay wala pang account. Mangyaring ipadala ang mga sumusunod na tagubilin upang magrehistro sila bilang staff sa inyong tindahan.
+                  </>
+                )}
+              </p>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-500 mb-1.5 uppercase tracking-wider">
+                  Mensahe / Tagubilin
+                </label>
+                <textarea
+                  readOnly
+                  rows="8"
+                  value={invitationInfo.body}
+                  className="w-full p-3 bg-stone-50 border border-stone-200 rounded-xl text-xs font-sans leading-relaxed focus:outline-none resize-none text-stone-700"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(invitationInfo.body);
+                    showToast("Mensahe ay nakopya na sa clipboard!");
+                  }}
+                  className="flex-1 py-2.5 border border-stone-200 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-50 transition cursor-pointer text-center"
+                >
+                  Kopyahin ang Mensahe
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const subject = encodeURIComponent(invitationInfo.subject);
+                    const body = encodeURIComponent(invitationInfo.body);
+                    window.open(`mailto:${invitationInfo.email}?subject=${subject}&body=${body}`, "_blank");
+                  }}
+                  className="flex-1 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white rounded-xl text-xs font-bold transition cursor-pointer text-center"
+                >
+                  Ipadala via Email
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
