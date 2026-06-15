@@ -11,7 +11,7 @@ const categoryGradients = {
   Chips: "from-orange-300 to-orange-500 shadow-orange-100",
   Noodles: "from-yellow-300 to-amber-500 shadow-yellow-100",
   Coffee: "from-amber-700 to-stone-700 shadow-stone-100",
-  "Canned Goods": "from-slate-400 to-slate-600 shadow-slate-100"
+  "Canned Goods": "from-slate-400 to-slate-600 shadow-slate-100",
 };
 
 // High-fidelity custom SVG icons for each category
@@ -19,9 +19,27 @@ const renderCategoryIcon = (category) => {
   switch (category) {
     case "Soda":
       return (
-        <svg className="w-10 h-10 text-white drop-shadow-sm" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <rect x="7" y="4" width="10" height="16" rx="2" fill="currentColor" fillOpacity="0.2" />
-          <path d="M7 8h10M7 16h10M12 4V2m-2 0h4" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg
+          className="w-10 h-10 text-white drop-shadow-sm"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <rect
+            x="7"
+            y="4"
+            width="10"
+            height="16"
+            rx="2"
+            fill="currentColor"
+            fillOpacity="0.2"
+          />
+          <path
+            d="M7 8h10M7 16h10M12 4V2m-2 0h4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
           <circle cx="12" cy="12" r="1.5" fill="currentColor" />
           <circle cx="10" cy="13" r="1" fill="currentColor" />
           <circle cx="14" cy="11" r="1" fill="currentColor" />
@@ -29,49 +47,132 @@ const renderCategoryIcon = (category) => {
       );
     case "Bakery":
       return (
-        <svg className="w-10 h-10 text-white drop-shadow-sm" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path d="M5 11V8a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" fill="currentColor" fillOpacity="0.2" />
-          <path d="M7 4.5V13M12 4V13M17 4.5V13M3 13h18c1.1 0 2 .9 2 2v2a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2z" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg
+          className="w-10 h-10 text-white drop-shadow-sm"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M5 11V8a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"
+            fill="currentColor"
+            fillOpacity="0.2"
+          />
+          <path
+            d="M7 4.5V13M12 4V13M17 4.5V13M3 13h18c1.1 0 2 .9 2 2v2a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-2c0-1.1.9-2 2-2z"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       );
     case "Chips":
       return (
-        <svg className="w-10 h-10 text-white drop-shadow-sm" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path d="M5 3l2 2h10l2-2v18l-2-2H7l-2 2V3z" fill="currentColor" fillOpacity="0.2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M8 9h8M7 13l3-2 4 3 3-2" strokeLinecap="round" strokeLinejoin="round" />
+        <svg
+          className="w-10 h-10 text-white drop-shadow-sm"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M5 3l2 2h10l2-2v18l-2-2H7l-2 2V3z"
+            fill="currentColor"
+            fillOpacity="0.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M8 9h8M7 13l3-2 4 3 3-2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
           <circle cx="12" cy="7" r="1" fill="currentColor" />
         </svg>
       );
     case "Noodles":
       return (
-        <svg className="w-10 h-10 text-white drop-shadow-sm" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path d="M3 10h18c0 4.5-3.5 8-8 8s-8-3.5-8-8z" fill="currentColor" fillOpacity="0.2" />
-          <path d="M8 18c0 1.5 1.5 2 4 2s4-.5 4-2" strokeLinecap="round"/>
-          <path d="M6 10c0-2 1-3 2-3s2 1 2 3M10 10c0-2 1-3 2-3s2 1 2 3M14 10c0-2 1-3 2-3s2 1 2 3" strokeLinecap="round"/>
+        <svg
+          className="w-10 h-10 text-white drop-shadow-sm"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M3 10h18c0 4.5-3.5 8-8 8s-8-3.5-8-8z"
+            fill="currentColor"
+            fillOpacity="0.2"
+          />
+          <path d="M8 18c0 1.5 1.5 2 4 2s4-.5 4-2" strokeLinecap="round" />
+          <path
+            d="M6 10c0-2 1-3 2-3s2 1 2 3M10 10c0-2 1-3 2-3s2 1 2 3M14 10c0-2 1-3 2-3s2 1 2 3"
+            strokeLinecap="round"
+          />
           <path d="M19 4L9 11M21 4L11 12" strokeLinecap="round" />
         </svg>
       );
     case "Coffee":
       return (
-        <svg className="w-10 h-10 text-white drop-shadow-sm" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path d="M5 8h12v7a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V8z" fill="currentColor" fillOpacity="0.2" />
+        <svg
+          className="w-10 h-10 text-white drop-shadow-sm"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M5 8h12v7a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V8z"
+            fill="currentColor"
+            fillOpacity="0.2"
+          />
           <path d="M17 10h2.5a2.5 2.5 0 0 1 0 5H17" strokeLinecap="round" />
-          <path d="M8 5c0-1.5.8-2 1.5-2.5M12 5c0-1.5.8-2 1.5-2.5" strokeLinecap="round"/>
+          <path
+            d="M8 5c0-1.5.8-2 1.5-2.5M12 5c0-1.5.8-2 1.5-2.5"
+            strokeLinecap="round"
+          />
         </svg>
       );
     case "Canned Goods":
       return (
-        <svg className="w-10 h-10 text-white drop-shadow-sm" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <ellipse cx="12" cy="5" rx="6" ry="2" fill="currentColor" fillOpacity="0.3" />
-          <path d="M6 5v12c0 1.1.9 2 6 2s6-.9 6-2V5" fill="currentColor" fillOpacity="0.1" />
+        <svg
+          className="w-10 h-10 text-white drop-shadow-sm"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <ellipse
+            cx="12"
+            cy="5"
+            rx="6"
+            ry="2"
+            fill="currentColor"
+            fillOpacity="0.3"
+          />
+          <path
+            d="M6 5v12c0 1.1.9 2 6 2s6-.9 6-2V5"
+            fill="currentColor"
+            fillOpacity="0.1"
+          />
           <ellipse cx="12" cy="17" rx="6" ry="2" />
-          <path d="M6 5v12M18 5v12M6 9h12M6 13h12" strokeLinecap="round"/>
+          <path d="M6 5v12M18 5v12M6 9h12M6 13h12" strokeLinecap="round" />
         </svg>
       );
     default:
       return (
-        <svg className="w-10 h-10 text-white drop-shadow-sm" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        <svg
+          className="w-10 h-10 text-white drop-shadow-sm"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+          />
         </svg>
       );
   }
@@ -89,7 +190,12 @@ export const CashierPOS = ({ embedded = false }) => {
   // States for adding a new product dynamically in POS
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addingProduct, setAddingProduct] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: "", price: "", stock: "", category: "Soda" });
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    price: "",
+    stock: "",
+    category: "Soda",
+  });
   const [addError, setAddError] = useState("");
   const [addSuccess, setAddSuccess] = useState("");
 
@@ -110,7 +216,6 @@ export const CashierPOS = ({ embedded = false }) => {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      // Force asynchronous execution in the microtask queue to avoid synchronous setState inside useEffect
       await Promise.resolve();
 
       if (!activeStoreId) {
@@ -151,7 +256,9 @@ export const CashierPOS = ({ embedded = false }) => {
     }
     const stockNum = parseInt(newProduct.stock, 10);
     if (isNaN(stockNum) || stockNum < 0) {
-      setAddError("Maglagay ng valid na dami ng stock (dapat hindi bababa sa 0).");
+      setAddError(
+        "Maglagay ng valid na dami ng stock (dapat hindi bababa sa 0).",
+      );
       return;
     }
 
@@ -160,11 +267,11 @@ export const CashierPOS = ({ embedded = false }) => {
       const created = await addProduct(
         {
           name: newProduct.name,
-          price: priceNum,
-          stock: stockNum,
-          category: newProduct.category
+          selling_price: priceNum, // Ginawang selling_price para tugma sa admin model ninyo
+          stock_quantity: stockNum, // Ginawang stock_quantity para magkasundo sa admin model
+          category: newProduct.category,
         },
-        activeStoreId
+        activeStoreId,
       );
 
       setProducts((prev) => [...prev, created]);
@@ -176,32 +283,55 @@ export const CashierPOS = ({ embedded = false }) => {
       }, 1000);
     } catch (err) {
       console.error("Save product failed:", err);
-      setAddError(err.message || "May naganap na error habang sine-save ang produkto.");
+      setAddError(
+        err.message || "May naganap na error habang sine-save ang produkto.",
+      );
     } finally {
       setAddingProduct(false);
     }
   };
 
   const addToCart = (product) => {
-    if (product.stock <= 0) {
-      showNotification(`Paumanhin, walang natitirang stock para sa ${product.name}.`, "error");
+    // Kinukuha ang stock na may dynamic fallback para sa admin keys
+    const currentStock =
+      product.stock_quantity !== undefined
+        ? product.stock_quantity
+        : product.stock || 0;
+    const itemPrice =
+      product.selling_price !== undefined
+        ? product.selling_price
+        : product.price || 0;
+
+    if (currentStock <= 0) {
+      showNotification(
+        `Paumanhin, walang natitirang stock para sa ${product.name}.`,
+        "error",
+      );
       return;
     }
 
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
-        if (existing.quantity >= product.stock) {
-          showNotification(`Limitadong stock: Hanggang ${product.stock} units lamang ng ${product.name} ang magagamit.`, "error");
+        if (existing.quantity >= currentStock) {
+          showNotification(
+            `Limitadong stock: Hanggang ${currentStock} units lamang ng ${product.name} ang magagamit.`,
+            "error",
+          );
           return prev;
         }
         showNotification(`Idinagdag ang ${product.name} sa cart.`, "success");
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
         );
       }
       showNotification(`Idinagdag ang ${product.name} sa cart.`, "success");
-      return [...prev, { ...product, quantity: 1 }];
+      return [
+        ...prev,
+        { ...product, price: itemPrice, stock: currentStock, quantity: 1 },
+      ];
     });
   };
 
@@ -209,20 +339,28 @@ export const CashierPOS = ({ embedded = false }) => {
     const product = products.find((p) => p.id === id);
     if (!product) return;
 
+    const currentStock =
+      product.stock_quantity !== undefined
+        ? product.stock_quantity
+        : product.stock || 0;
+
     setCart((prev) =>
       prev
         .map((item) => {
           if (item.id === id) {
             const nextQty = item.quantity + amount;
-            if (nextQty > product.stock) {
-              showNotification(`Limitadong stock: Hanggang ${product.stock} units lamang ng ${product.name} ang magagamit.`, "error");
+            if (nextQty > currentStock) {
+              showNotification(
+                `Limitadong stock: Hanggang ${currentStock} units lamang ng ${product.name} ang magagamit.`,
+                "error",
+              );
               return item;
             }
             return { ...item, quantity: nextQty };
           }
           return item;
         })
-        .filter((item) => item.quantity > 0)
+        .filter((item) => item.quantity > 0),
     );
   };
 
@@ -233,35 +371,56 @@ export const CashierPOS = ({ embedded = false }) => {
     }
   };
 
-  // Subtotal and Total calculations
-  const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  // Subtotal and Total calculations na may ligtas na fallback
+  const subtotal = cart.reduce((acc, item) => {
+    const price =
+      item.selling_price !== undefined ? item.selling_price : item.price || 0;
+    return acc + price * item.quantity;
+  }, 0);
   const discountAmount = (subtotal * discount) / 100;
   const total = subtotal - discountAmount;
 
   const handlePrint = (order) => {
     const orderDate = order.created_at?.toDate
-      ? order.created_at.toDate().toLocaleString("fil-PH", { dateStyle: "medium", timeStyle: "short" })
-      : new Date().toLocaleString("fil-PH", { dateStyle: "medium", timeStyle: "short" });
+      ? order.created_at
+          .toDate()
+          .toLocaleString("fil-PH", { dateStyle: "medium", timeStyle: "short" })
+      : new Date().toLocaleString("fil-PH", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        });
 
     const receiptUrl = `${window.location.origin}/receipt/${order.id}`;
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(receiptUrl)}`;
 
-    const itemsHtml = order.items?.map((item) => `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-        <div style="flex:1;padding-right:12px;">
-          <span style="font-weight:700;color:#0C0A09;display:block;">${item.name}</span>
-          <span style="font-size:10px;color:#57534E;">${item.quantity} x \u20B1${item.price.toFixed(2)}</span>
+    const itemsHtml =
+      order.items
+        ?.map((item) => {
+          const price =
+            item.selling_price !== undefined
+              ? item.selling_price
+              : item.price || 0;
+          return `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div style="flex:1;padding-right:12px;">
+            <span style="font-weight:700;color:#0C0A09;display:block;">${item.name}</span>
+            <span style="font-size:10px;color:#57534E;">${item.quantity} x \u20B1${price.toFixed(2)}</span>
+          </div>
+          <span style="font-weight:700;color:#0C0A09;">\u20B1${(item.quantity * price).toFixed(2)}</span>
         </div>
-        <span style="font-weight:700;color:#0C0A09;">\u20B1${(item.quantity * item.price).toFixed(2)}</span>
-      </div>
-    `).join("") || "";
+      `;
+        })
+        .join("") || "";
 
-    const discountHtml = order.discount > 0 ? `
+    const discountHtml =
+      order.discount > 0
+        ? `
       <div style="display:flex;justify-content:space-between;color:#F97316;">
         <span>Discount (${order.discount}%):</span>
         <span style="font-weight:700;">-\u20B1${((order.subtotal * order.discount) / 100).toFixed(2)}</span>
       </div>
-    ` : "";
+    `
+        : "";
 
     const printHtml = `
       <!DOCTYPE html>
@@ -302,12 +461,12 @@ export const CashierPOS = ({ embedded = false }) => {
           <div style="padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;font-size:11px;color:#57534E;">
             <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
               <span>Subtotal:</span>
-              <span style="font-weight:700;color:#0C0A09;">\u20B1${order.subtotal?.toFixed(2)}</span>
+              <span style="font-weight:700;color:#0C0A09;">\u20B1${(order.subtotal || 0).toFixed(2)}</span>
             </div>
             ${discountHtml}
             <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;color:#0C0A09;padding-top:8px;border-top:1px dashed #ccc;margin-top:6px;">
               <span>KABUUAN:</span>
-              <span style="color:#064E3B;">\u20B1${order.total?.toFixed(2)}</span>
+              <span style="color:#064E3B;">\u20B1${(order.total || 0).toFixed(2)}</span>
             </div>
           </div>
 
@@ -323,7 +482,7 @@ export const CashierPOS = ({ embedded = false }) => {
         </div>
         <script>
           window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; };
-        </scr` + `ipt>
+        </script>
       </body>
       </html>
     `;
@@ -337,7 +496,10 @@ export const CashierPOS = ({ embedded = false }) => {
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
-      showNotification("Mangyaring magdagdag muna ng produkto sa cart.", "error");
+      showNotification(
+        "Mangyaring magdagdag muna ng produkto sa cart.",
+        "error",
+      );
       return;
     }
 
@@ -346,30 +508,39 @@ export const CashierPOS = ({ embedded = false }) => {
 
       const orderData = {
         store_id: activeStoreId,
-        items: cart.map(item => ({
+        items: cart.map((item) => ({
           id: item.id,
           name: item.name,
-          price: item.price,
+          price:
+            item.selling_price !== undefined
+              ? item.selling_price
+              : item.price || 0,
           quantity: item.quantity,
-          category: item.category
+          category: item.category,
         })),
         subtotal,
         discount,
         total,
         payment_method: "Cash",
         cashier_id: currentUser?.uid || "unknown",
-        cashier_name: currentUser?.fullName || currentUser?.displayName || currentUser?.email || "Cashier"
+        cashier_name:
+          currentUser?.fullName ||
+          currentUser?.displayName ||
+          currentUser?.email ||
+          "Cashier",
       };
 
       const result = await placeOrder(orderData);
 
-      // Re-fetch products from Firestore to get updated stock levels
       const data = await getProductsByStore(activeStoreId);
       setProducts(data);
 
       setLatestOrder(result);
       setShowReceipt(true);
-      showNotification(`Matagumpay ang Checkout! Order ID: ${result.id}`, "success");
+      showNotification(
+        `Matagumpay ang Checkout! Order ID: ${result.id}`,
+        "success",
+      );
       setCart([]);
     } catch (err) {
       console.error("Checkout failed:", err);
@@ -379,30 +550,40 @@ export const CashierPOS = ({ embedded = false }) => {
     }
   };
 
-  // Category filtering options
-  const categories = ["All", "Soda", "Bakery", "Chips", "Noodles", "Coffee", "Canned Goods"];
+  const categories = [
+    "All",
+    "Soda",
+    "Bakery",
+    "Chips",
+    "Noodles",
+    "Coffee",
+    "Canned Goods",
+  ];
 
-  // Filter and search logic
   const filteredCatalog = products.filter((product) => {
-    const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "All" || product.category === selectedCategory;
     const matchesSearch =
       (product.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.category || "").toLowerCase().includes(searchQuery.toLowerCase());
+      (product.category || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-
-  // ── Inner POS body (product grid + cart) ───────────────────────────────────
   const posBody = (
     <>
       {/* Left Side: Product Catalog */}
       <div className="flex-1 bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm flex flex-col">
-
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#57534E]/10">
           <div>
-            <h2 className="text-xl font-extrabold text-[#064E3B]">Katalogo ng Produkto</h2>
-            <p className="text-xs text-[#57534E]">Pumili ng produkto para idagdag sa kasalukuyang cart</p>
+            <h2 className="text-xl font-extrabold text-[#064E3B]">
+              Katalogo ng Produkto
+            </h2>
+            <p className="text-xs text-[#57534E]">
+              Pumili ng produkto para idagdag sa kasalukuyang cart
+            </p>
           </div>
           <div className="flex items-center gap-3.5 self-start sm:self-center">
             {activeStoreId && (
@@ -425,8 +606,18 @@ export const CashierPOS = ({ embedded = false }) => {
         <div className="space-y-4 mb-6">
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#57534E]/50">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
             </span>
             <input
@@ -441,8 +632,18 @@ export const CashierPOS = ({ embedded = false }) => {
                 onClick={() => setSearchQuery("")}
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#57534E]/60 hover:text-[#0C0A09] cursor-pointer"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             )}
@@ -468,74 +669,161 @@ export const CashierPOS = ({ embedded = false }) => {
         <div className="flex-1 overflow-y-auto max-h-[550px] pr-1 flex flex-col">
           {loading ? (
             <div className="flex-1 flex flex-col items-center justify-center py-20">
-              <svg className="animate-spin h-8 w-8 text-[#064E3B]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin h-8 w-8 text-[#064E3B]"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
-              <p className="text-xs text-[#57534E] mt-3 font-semibold">Kinukuha ang mga produkto...</p>
+              <p className="text-xs text-[#57534E] mt-3 font-semibold">
+                Kinukuha ang mga produkto...
+              </p>
             </div>
           ) : error ? (
             <div className="text-center py-16 text-[#F97316]">
               <p className="text-sm font-bold">{error}</p>
-              <button onClick={() => window.location.reload()} className="mt-3 px-4 py-2 bg-[#57534E] hover:bg-[#57534E]/90 text-white rounded-xl text-xs font-bold transition cursor-pointer">I-refresh</button>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-3 px-4 py-2 bg-[#57534E] hover:bg-[#57534E]/90 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+              >
+                I-refresh
+              </button>
             </div>
           ) : products.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-[#57534E]/10 rounded-2xl p-6 bg-[#FAFAF9]">
               <div className="p-3.5 bg-[#57534E]/5 text-[#57534E]/60 rounded-full mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4.5m16 0h-16" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4.5m16 0h-16"
+                  />
                 </svg>
               </div>
-              <h3 className="font-extrabold text-sm text-[#0C0A09]">Walang Produkto sa Tindahang Ito</h3>
-              <p className="text-xs text-[#57534E] mt-1 max-w-[240px] leading-relaxed">Wala pang paninda ang tindahang ito sa database.</p>
-              <button onClick={() => setIsAddModalOpen(true)} className="mt-4 px-4 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer shadow-sm">
+              <h3 className="font-extrabold text-sm text-[#0C0A09]">
+                Walang Produkto sa Tindahang Ito
+              </h3>
+              <p className="text-xs text-[#57534E] mt-1 max-w-[240px] leading-relaxed">
+                Wala pang paninda ang tindahang ito sa database.
+              </p>
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="mt-4 px-4 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
                 <span>Magdagdag ng Produkto</span>
               </button>
             </div>
           ) : filteredCatalog.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
               {filteredCatalog.map((product) => {
-                const isOutOfStock = product.stock <= 0;
-                const isLowStock = product.stock > 0 && product.stock <= 10;
+                // Pag-handle sa parehong field names (admin vs POS original fields) upang ligtas basahin
+                const itemPrice =
+                  product.selling_price !== undefined
+                    ? product.selling_price
+                    : product.price || 0;
+                const currentStock =
+                  product.stock_quantity !== undefined
+                    ? product.stock_quantity
+                    : product.stock || 0;
+
+                const isOutOfStock = currentStock <= 0;
+                const isLowStock = currentStock > 0 && currentStock <= 10;
                 return (
                   <div
                     key={product.id}
                     onClick={() => addToCart(product)}
                     className={`group relative p-4 rounded-2xl border border-[#57534E]/15 bg-white transition-all duration-300 flex flex-col justify-between ${
-                      isOutOfStock ? "opacity-60 cursor-not-allowed bg-stone-50" : "cursor-pointer hover:shadow-lg hover:border-[#064E3B]/40 hover:-translate-y-1 active:scale-[0.98]"
+                      isOutOfStock
+                        ? "opacity-60 cursor-not-allowed bg-stone-50"
+                        : "cursor-pointer hover:shadow-lg hover:border-[#064E3B]/40 hover:-translate-y-1 active:scale-[0.98]"
                     }`}
                   >
-                    <div className={`aspect-video w-full rounded-xl flex items-center justify-center bg-gradient-to-br ${categoryGradients[product.category] || "from-rose-400 to-rose-600 shadow-rose-100"} p-4 mb-4 relative overflow-hidden transition-transform duration-500 group-hover:scale-[1.02] shadow-sm`}>
+                    <div
+                      className={`aspect-video w-full rounded-xl flex items-center justify-center bg-gradient-to-br ${categoryGradients[product.category] || "from-rose-400 to-rose-600 shadow-rose-100"} p-4 mb-4 relative overflow-hidden transition-transform duration-500 group-hover:scale-[1.02] shadow-sm`}
+                    >
                       <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       {renderCategoryIcon(product.category)}
-                      <span className="absolute top-2 left-2 text-[9px] uppercase font-extrabold tracking-wider bg-white/90 text-[#0C0A09] px-2 py-0.5 rounded-lg shadow-sm">{product.category}</span>
+                      <span className="absolute top-2 left-2 text-[9px] uppercase font-extrabold tracking-wider bg-white/90 text-[#0C0A09] px-2 py-0.5 rounded-lg shadow-sm">
+                        {product.category}
+                      </span>
                       {isOutOfStock && (
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center">
-                          <span className="bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-xl shadow-md">Walang Stock</span>
+                          <span className="bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-xl shadow-md">
+                            Walang Stock
+                          </span>
                         </div>
                       )}
                     </div>
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
-                        <h4 className="font-extrabold text-sm text-[#0C0A09] group-hover:text-[#064E3B] transition-colors line-clamp-2 min-h-[40px]">{product.name}</h4>
+                        <h4 className="font-extrabold text-sm text-[#0C0A09] group-hover:text-[#064E3B] transition-colors line-clamp-2 min-h-[40px]">
+                          {product.name}
+                        </h4>
                         <div className="mt-2 flex items-center">
                           {isOutOfStock ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-lg border border-rose-100"><span className="w-1.5 h-1.5 rounded-full bg-rose-600" />0 stock</span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-lg border border-rose-100">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                              0 stock
+                            </span>
                           ) : isLowStock ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-100 animate-pulse"><span className="w-1.5 h-1.5 rounded-full bg-amber-500" />Mababa ({product.stock} left)</span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-100 animate-pulse">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                              Mababa ({currentStock} left)
+                            </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#064E3B] bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-100"><span className="w-1.5 h-1.5 rounded-full bg-[#064E3B]" />May stock ({product.stock})</span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#064E3B] bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-100">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#064E3B]" />
+                              May stock ({currentStock})
+                            </span>
                           )}
                         </div>
                       </div>
                       <div className="flex justify-between items-center mt-4 pt-3 border-t border-stone-100">
                         <div className="flex flex-col">
-                          <span className="text-[10px] text-[#57534E]/60 uppercase font-bold leading-none">Presyo</span>
-                          <span className="font-extrabold text-[#064E3B] text-base">₱{product.price.toFixed(2)}</span>
+                          <span className="text-[10px] text-[#57534E]/60 uppercase font-bold leading-none">
+                            Presyo
+                          </span>
+                          {/* LIGTAS NA PUSH: Dito naayos ang toFixed crash gamit ang fallback local variable key */}
+                          <span className="font-extrabold text-[#064E3B] text-base">
+                            ₱{itemPrice.toFixed(2)}
+                          </span>
                         </div>
                         {!isOutOfStock && (
                           <span className="w-8 h-8 rounded-xl bg-stone-100 text-[#57534E] group-hover:bg-[#064E3B] group-hover:text-white transition-all flex items-center justify-center shadow-sm">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.5"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
                           </span>
                         )}
                       </div>
@@ -546,11 +834,25 @@ export const CashierPOS = ({ embedded = false }) => {
             </div>
           ) : (
             <div className="text-center py-20 bg-[#FAFAF9] rounded-2xl border border-dashed border-[#57534E]/20 flex flex-col justify-center items-center">
-              <svg className="w-12 h-12 text-[#57534E]/40 mx-auto mb-3" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="w-12 h-12 text-[#57534E]/40 mx-auto mb-3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
-              <p className="text-sm font-bold text-[#57534E]">Walang nahanap na produkto.</p>
-              <p className="text-xs text-[#57534E]/70 mt-1">Subukang baguhin ang iyong keyword o filter.</p>
+              <p className="text-sm font-bold text-[#57534E]">
+                Walang nahanap na produkto.
+              </p>
+              <p className="text-xs text-[#57534E]/70 mt-1">
+                Subukang baguhin ang iyong keyword o filter.
+              </p>
             </div>
           )}
         </div>
@@ -561,38 +863,87 @@ export const CashierPOS = ({ embedded = false }) => {
         <div>
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-[#57534E]/10">
             <h3 className="text-lg font-bold text-[#064E3B] flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 100-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
               </svg>
               Kasalukuyang Cart
             </h3>
             {cart.length > 0 && (
-              <button onClick={clearCart} className="text-xs text-[#F97316] font-bold hover:underline cursor-pointer">I-clear</button>
+              <button
+                onClick={clearCart}
+                className="text-xs text-[#F97316] font-bold hover:underline cursor-pointer"
+              >
+                I-clear
+              </button>
             )}
           </div>
 
           <div className="space-y-3 max-h-[260px] overflow-y-auto pr-1">
-            {cart.map((item) => (
-              <div key={item.id} className="flex justify-between items-center text-xs p-2 bg-[#FAFAF9] rounded-lg border border-[#57534E]/5">
-                <div className="max-w-[140px] truncate">
-                  <span className="font-bold text-[#0C0A09] block">{item.name}</span>
-                  <span className="text-[10px] text-[#57534E]">₱{item.price} bawat isa</span>
+            {cart.map((item) => {
+              const price =
+                item.selling_price !== undefined
+                  ? item.selling_price
+                  : item.price || 0;
+              return (
+                <div
+                  key={item.id}
+                  className="flex justify-between items-center text-xs p-2 bg-[#FAFAF9] rounded-lg border border-[#57534E]/5"
+                >
+                  <div className="max-w-[140px] truncate">
+                    <span className="font-bold text-[#0C0A09] block">
+                      {item.name}
+                    </span>
+                    <span className="text-[10px] text-[#57534E]">
+                      ₱{price} bawat isa
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => updateQuantity(item.id, -1)}
+                      className="w-6 h-6 rounded-full bg-white border border-[#57534E]/20 text-[#57534E] hover:bg-[#57534E]/10 flex items-center justify-center font-bold transition cursor-pointer"
+                    >
+                      -
+                    </button>
+                    <span className="font-extrabold w-5 text-center">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(item.id, 1)}
+                      className="w-6 h-6 rounded-full bg-white border border-[#57534E]/20 text-[#57534E] hover:bg-[#57534E]/10 flex items-center justify-center font-bold transition cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <span className="font-bold text-[#0C0A09] w-12 text-right">
+                    ₱{(price * item.quantity).toFixed(2)}
+                  </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <button onClick={() => updateQuantity(item.id, -1)} className="w-6 h-6 rounded-full bg-white border border-[#57534E]/20 text-[#57534E] hover:bg-[#57534E]/10 flex items-center justify-center font-bold transition cursor-pointer">-</button>
-                  <span className="font-extrabold w-5 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, 1)} className="w-6 h-6 rounded-full bg-white border border-[#57534E]/20 text-[#57534E] hover:bg-[#57534E]/10 flex items-center justify-center font-bold transition cursor-pointer">+</button>
-                </div>
-                <span className="font-bold text-[#0C0A09] w-12 text-right">₱{item.price * item.quantity}</span>
-              </div>
-            ))}
+              );
+            })}
             {cart.length === 0 && (
               <div className="text-center py-12 text-[#57534E]/50">
-                <svg className="w-10 h-10 mx-auto text-[#57534E]/30 mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5h6.75" />
+                <svg
+                  className="w-10 h-10 mx-auto text-[#57534E]/30 mb-2"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5h6.75"
+                  />
                 </svg>
                 <p className="text-xs font-bold">Walang produkto sa cart.</p>
-                <p className="text-[10px] mt-0.5">Pumili ng mga item sa katalogo.</p>
+                <p className="text-[10px] mt-0.5">
+                  Pumili ng mga item sa katalogo.
+                </p>
               </div>
             )}
           </div>
@@ -601,11 +952,16 @@ export const CashierPOS = ({ embedded = false }) => {
         {/* Pricing Calculations & Checkout */}
         <div className="pt-4 border-t border-[#57534E]/10 mt-6 space-y-3">
           <div className="flex justify-between text-xs text-[#57534E] font-medium">
-            <span>Subtotal:</span><span>₱{subtotal.toFixed(2)}</span>
+            <span>Subtotal:</span>
+            <span>₱{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-xs text-[#57534E] font-medium items-center">
             <span>Discount (%):</span>
-            <select className="bg-[#FAFAF9] border border-[#57534E]/20 rounded px-1.5 py-0.5 text-xs text-[#0C0A09] focus:outline-none focus:border-[#064E3B]" value={discount} onChange={(e) => setDiscount(Number(e.target.value))}>
+            <select
+              className="bg-[#FAFAF9] border border-[#57534E]/20 rounded px-1.5 py-0.5 text-xs text-[#0C0A09] focus:outline-none focus:border-[#064E3B]"
+              value={discount}
+              onChange={(e) => setDiscount(Number(e.target.value))}
+            >
               <option value={0}>0%</option>
               <option value={5}>5%</option>
               <option value={10}>10%</option>
@@ -616,21 +972,48 @@ export const CashierPOS = ({ embedded = false }) => {
             <span>Kabuuang Halaga:</span>
             <span className="text-lg text-[#064E3B]">₱{total.toFixed(2)}</span>
           </div>
-          <button onClick={handleCheckout} disabled={checkoutLoading}
+          <button
+            onClick={handleCheckout}
+            disabled={checkoutLoading}
             className="w-full bg-[#064E3B] hover:bg-[#064E3B]/90 disabled:opacity-75 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition duration-200 shadow-md cursor-pointer mt-4 flex items-center justify-center gap-2 hover:shadow-lg active:scale-[0.99]"
           >
             {checkoutLoading ? (
               <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 <span>Pinoproseso ang Bayad...</span>
               </>
             ) : (
               <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <span>Iproseso ang Bayad</span>
               </>
@@ -641,15 +1024,47 @@ export const CashierPOS = ({ embedded = false }) => {
 
       {/* Floating Notification Toast */}
       {notification && (
-        <div className={`fixed bottom-6 right-6 z-50 px-5 py-4 rounded-2xl shadow-xl flex items-center gap-3 border transition-all duration-300 ${
-          notification.type === "error" ? "bg-rose-50 text-rose-800 border-rose-200" : "bg-emerald-50 text-emerald-800 border-emerald-200"
-        }`}>
+        <div
+          className={`fixed bottom-6 right-6 z-50 px-5 py-4 rounded-2xl shadow-xl flex items-center gap-3 border transition-all duration-300 ${
+            notification.type === "error"
+              ? "bg-rose-50 text-rose-800 border-rose-200"
+              : "bg-emerald-50 text-emerald-800 border-emerald-200"
+          }`}
+        >
           {notification.type === "error" ? (
-            <div className="bg-rose-100 p-1 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-rose-600" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
+            <div className="bg-rose-100 p-1 rounded-lg">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-rose-600"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
           ) : (
-            <div className="bg-emerald-100 p-1 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg></div>
+            <div className="bg-emerald-100 p-1 rounded-lg">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-emerald-600"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
           )}
-          <span className="text-xs font-extrabold tracking-wide">{notification.message}</span>
+          <span className="text-xs font-extrabold tracking-wide">
+            {notification.message}
+          </span>
         </div>
       )}
 
@@ -659,59 +1074,172 @@ export const CashierPOS = ({ embedded = false }) => {
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-[#57534E]/10 flex flex-col items-center">
             <div className="w-full flex justify-between items-center mb-4 pb-2 border-b border-[#57534E]/10">
               <h3 className="font-bold text-[#064E3B] text-base flex items-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/xl"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
                 Matagumpay na Bayad!
               </h3>
-              <button onClick={() => { setShowReceipt(false); setLatestOrder(null); }} className="text-xs text-[#57534E] font-bold hover:underline cursor-pointer">Isara</button>
+              <button
+                onClick={() => {
+                  setShowReceipt(false);
+                  setLatestOrder(null);
+                }}
+                className="text-xs text-[#57534E] font-bold hover:underline cursor-pointer"
+              >
+                Isara
+              </button>
             </div>
-            <div id="printable-receipt" className="w-full bg-white p-4 border border-dashed border-[#57534E]/30 rounded-xl flex flex-col text-xs font-sans text-black">
+            <div
+              id="printable-receipt"
+              className="w-full bg-white p-4 border border-dashed border-[#57534E]/30 rounded-xl flex flex-col text-xs font-sans text-black"
+            >
               <div className="text-center pb-3 border-b border-dashed border-[#57534E]/20">
-                <span className="text-[#064E3B] font-extrabold text-xl tracking-tight block">POS-by-KYUT</span>
-                <p className="text-[9px] font-bold text-[#57534E] uppercase tracking-wider mt-0.5">Store Receipt</p>
+                <span className="text-[#064E3B] font-extrabold text-xl tracking-tight block">
+                  POS-by-KYUT
+                </span>
+                <p className="text-[9px] font-bold text-[#57534E] uppercase tracking-wider mt-0.5">
+                  Store Receipt
+                </p>
                 <div className="text-[9px] text-[#57534E]/80 mt-1.5 font-mono space-y-0.5 text-left">
                   <div>STORE ID: {latestOrder.store_id}</div>
                   <div>TXID: {latestOrder.id}</div>
-                  <div>DATE: {latestOrder.created_at?.toDate ? latestOrder.created_at.toDate().toLocaleString("fil-PH", { dateStyle: "short", timeStyle: "short" }) : new Date().toLocaleString("fil-PH", { dateStyle: "short", timeStyle: "short" })}</div>
+                  <div>
+                    DATE:{" "}
+                    {latestOrder.created_at?.toDate
+                      ? latestOrder.created_at
+                          .toDate()
+                          .toLocaleString("fil-PH", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })
+                      : new Date().toLocaleString("fil-PH", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })}
+                  </div>
                 </div>
               </div>
               <div className="py-3 border-b border-dashed border-[#57534E]/20">
-                <div className="font-bold text-[9px] uppercase text-[#57534E] tracking-wider mb-1.5 flex justify-between"><span>Produkto</span><span>Halaga</span></div>
+                <div className="font-bold text-[9px] uppercase text-[#57534E] tracking-wider mb-1.5 flex justify-between">
+                  <span>Produkto</span>
+                  <span>Halaga</span>
+                </div>
                 <div className="space-y-1.5 font-mono text-[11px]">
-                  {latestOrder.items?.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-start">
-                      <div className="flex-1 pr-3">
-                        <span className="font-bold text-black">{item.name}</span>
-                        <span className="text-[9px] text-[#57534E] block">{item.quantity} x ₱{item.price.toFixed(2)}</span>
+                  {latestOrder.items?.map((item, idx) => {
+                    const price =
+                      item.selling_price !== undefined
+                        ? item.selling_price
+                        : item.price || 0;
+                    return (
+                      <div
+                        key={idx}
+                        className="flex justify-between items-start"
+                      >
+                        <div className="flex-1 pr-3">
+                          <span className="font-bold text-black">
+                            {item.name}
+                          </span>
+                          <span className="text-[9px] text-[#57534E] block">
+                            {item.quantity} x ₱{price.toFixed(2)}
+                          </span>
+                        </div>
+                        <span className="font-bold text-black">
+                          ₱{(item.quantity * price).toFixed(2)}
+                        </span>
                       </div>
-                      <span className="font-bold text-black">₱{(item.quantity * item.price).toFixed(2)}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               <div className="py-3 border-b border-dashed border-[#57534E]/20 space-y-1 font-mono text-[11px] text-[#57534E]">
-                <div className="flex justify-between"><span>Subtotal:</span><span className="font-bold text-black">₱{latestOrder.subtotal?.toFixed(2)}</span></div>
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span className="font-bold text-black">
+                    ₱{(latestOrder.subtotal || 0).toFixed(2)}
+                  </span>
+                </div>
                 {latestOrder.discount > 0 && (
-                  <div className="flex justify-between text-[#F97316]"><span>Discount ({latestOrder.discount}%):</span><span className="font-bold">-₱{((latestOrder.subtotal * latestOrder.discount) / 100).toFixed(2)}</span></div>
+                  <div className="flex justify-between text-[#F97316]">
+                    <span>Discount ({latestOrder.discount}%):</span>
+                    <span className="font-bold">
+                      -₱
+                      {(
+                        (latestOrder.subtotal * latestOrder.discount) /
+                        100
+                      ).toFixed(2)}
+                    </span>
+                  </div>
                 )}
-                <div className="flex justify-between text-[12px] font-extrabold text-black pt-1.5 border-t border-dashed border-[#57534E]/10"><span>KABUUAN:</span><span className="text-sm text-[#064E3B]">₱{latestOrder.total?.toFixed(2)}</span></div>
+                <div className="flex justify-between text-[12px] font-extrabold text-black pt-1.5 border-t border-dashed border-[#57534E]/10">
+                  <span>KABUUAN:</span>
+                  <span className="text-sm text-[#064E3B]">
+                    ₱{(latestOrder.total || 0).toFixed(2)}
+                  </span>
+                </div>
               </div>
               <div className="py-3 text-center text-[9px] text-[#57534E]/80 border-b border-dashed border-[#57534E]/10">
-                <div>Cashier: <strong className="font-bold">{latestOrder.cashier_name}</strong></div>
-                <div className="mt-1.5 text-[#064E3B] font-bold">Maraming salamat po!</div>
+                <div>
+                  Cashier:{" "}
+                  <strong className="font-bold">
+                    {latestOrder.cashier_name}
+                  </strong>
+                </div>
+                <div className="mt-1.5 text-[#064E3B] font-bold">
+                  Maraming salamat po!
+                </div>
               </div>
               <div className="pt-4 flex flex-col items-center justify-center text-center">
                 <div className="p-1.5 bg-white border border-[#57534E]/15 rounded-lg shadow-sm">
-                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(`${window.location.origin}/receipt/${latestOrder.id}`)}`} alt="Receipt QR" className="w-24 h-24 select-none" />
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(`${window.location.origin}/receipt/${latestOrder.id}`)}`}
+                    alt="Receipt QR"
+                    className="w-24 h-24 select-none"
+                  />
                 </div>
-                <span className="text-[8px] uppercase font-bold text-[#57534E]/50 tracking-wider mt-2">Scan QR to view online receipt</span>
+                <span className="text-[8px] uppercase font-bold text-[#57534E]/50 tracking-wider mt-2">
+                  Scan QR to view online receipt
+                </span>
               </div>
             </div>
             <div className="mt-4 flex gap-2 w-full">
-              <button onClick={() => handlePrint(latestOrder)} className="flex-1 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1 cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+              <button
+                onClick={() => handlePrint(latestOrder)}
+                className="flex-1 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                  />
+                </svg>
                 Print
               </button>
-              <button onClick={() => { setShowReceipt(false); setLatestOrder(null); }} className="flex-1 py-2.5 bg-white hover:bg-[#FAFAF9] text-[#57534E] font-bold rounded-xl text-xs transition border border-[#57534E]/25 text-center flex items-center justify-center cursor-pointer">
+              <button
+                onClick={() => {
+                  setShowReceipt(false);
+                  setLatestOrder(null);
+                }}
+                className="flex-1 py-2.5 bg-white hover:bg-[#FAFAF9] text-[#57534E] font-bold rounded-xl text-xs transition border border-[#57534E]/25 text-center flex items-center justify-center cursor-pointer"
+              >
                 Bagong Order
               </button>
             </div>
@@ -724,40 +1252,153 @@ export const CashierPOS = ({ embedded = false }) => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-[#57534E]/10">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-[#064E3B]">Magdagdag ng Produkto</h2>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-1 rounded-lg hover:bg-[#57534E]/10 transition text-[#57534E]/70 cursor-pointer">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+              <h2 className="text-xl font-bold text-[#064E3B]">
+                Magdagdag ng Produkto
+              </h2>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-[#57534E]/10 transition text-[#57534E]/70 cursor-pointer"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               </button>
             </div>
-            {addError && <div className="bg-[#F97316]/10 border border-[#F97316]/20 text-[#F97316] p-3 rounded-xl text-xs mb-4">{addError}</div>}
-            {addSuccess && <div className="bg-emerald-50 border border-emerald-100 text-[#064E3B] p-3 rounded-xl text-xs mb-4">{addSuccess}</div>}
+            {addError && (
+              <div className="bg-[#F97316]/10 border border-[#F97316]/20 text-[#F97316] p-3 rounded-xl text-xs mb-4">
+                {addError}
+              </div>
+            )}
+            {addSuccess && (
+              <div className="bg-emerald-50 border border-emerald-100 text-[#064E3B] p-3 rounded-xl text-xs mb-4">
+                {addSuccess}
+              </div>
+            )}
             <form onSubmit={handleAddProduct} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">Pangalan ng Produkto</label>
-                <input type="text" required placeholder="Hal. Coca-Cola 1.5L" className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} />
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">
+                  Pangalan ng Produkto
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Hal. Coca-Cola 1.5L"
+                  className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
+                  value={newProduct.name}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, name: e.target.value })
+                  }
+                />
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">Kategorya</label>
-                <select className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl bg-white focus:outline-none focus:border-[#064E3B] text-sm" value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}>
-                  {["Soda", "Bakery", "Chips", "Noodles", "Coffee", "Canned Goods", "Others"].map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">
+                  Kategorya
+                </label>
+                <select
+                  className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl bg-white focus:outline-none focus:border-[#064E3B] text-sm"
+                  value={newProduct.category}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, category: e.target.value })
+                  }
+                >
+                  {[
+                    "Soda",
+                    "Bakery",
+                    "Chips",
+                    "Noodles",
+                    "Coffee",
+                    "Canned Goods",
+                    "Others",
+                  ].map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">Presyo (₱)</label>
-                  <input type="number" step="0.01" required placeholder="0.00" className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} />
+                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">
+                    Presyo (₱)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="0.00"
+                    className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
+                    value={newProduct.price}
+                    onChange={(e) =>
+                      setNewProduct({ ...newProduct, price: e.target.value })
+                    }
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">Dami (Stock)</label>
-                  <input type="number" required placeholder="0" className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })} />
+                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">
+                    Dami (Stock)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="0"
+                    className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
+                    value={newProduct.stock}
+                    onChange={(e) =>
+                      setNewProduct({ ...newProduct, stock: e.target.value })
+                    }
+                  />
                 </div>
               </div>
               <div className="flex gap-3 pt-4 border-t border-[#57534E]/10 mt-6">
-                <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-3 border border-[#57534E]/20 rounded-xl text-xs font-bold text-[#57534E] hover:bg-[#57534E]/5 transition cursor-pointer">Banselahin</button>
-                <button type="submit" disabled={addingProduct} className="flex-1 py-3 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white rounded-xl text-xs font-bold transition flex justify-center items-center gap-1.5 disabled:opacity-75 cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="flex-1 py-3 border border-[#57534E]/20 rounded-xl text-xs font-bold text-[#57534E] hover:bg-[#57534E]/5 transition cursor-pointer"
+                >
+                  Banselahin
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingProduct}
+                  className="flex-1 py-3 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white rounded-xl text-xs font-bold transition flex justify-center items-center gap-1.5 disabled:opacity-75 cursor-pointer"
+                >
                   {addingProduct ? (
-                    <><svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Naililikha...</span></>
-                  ) : <span>Likhain</span>}
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      <span>Naililikha...</span>
+                    </>
+                  ) : (
+                    <span>Likhain</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -768,11 +1409,7 @@ export const CashierPOS = ({ embedded = false }) => {
   );
 
   if (embedded) {
-    return (
-      <div className="font-sans text-[#0C0A09]">
-        {posBody}
-      </div>
-    );
+    return <div className="font-sans text-[#0C0A09]">{posBody}</div>;
   }
 
   return (
