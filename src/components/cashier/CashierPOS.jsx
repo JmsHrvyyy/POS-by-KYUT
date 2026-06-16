@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "../shared/Navbar";
 import { useAuth } from "../../context/AuthContext";
 import { getProductsByStore, addProduct } from "../../services/productService";
@@ -195,6 +195,7 @@ export const CashierPOS = ({ embedded = false }) => {
     price: "",
     stock: "",
     category: "Soda",
+    barcode_sku: "",
   });
   const [addError, setAddError] = useState("");
   const [addSuccess, setAddSuccess] = useState("");
@@ -205,6 +206,29 @@ export const CashierPOS = ({ embedded = false }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [notification, setNotification] = useState(null);
+
+  // Barcode state & keydown handler
+  const [barcodeInput, setBarcodeInput] = useState("");
+
+  const handleBarcodeKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const code = barcodeInput.trim();
+      if (!code) return;
+
+      const matchedProd = products.find(
+        (p) => p.barcode_sku && p.barcode_sku.trim().toLowerCase() === code.toLowerCase()
+      );
+
+      if (matchedProd) {
+        addToCart(matchedProd);
+        showNotification(`Aytem na may barcode "${matchedProd.name}" ay idinagdag sa cart!`, "success");
+      } else {
+        showNotification(`Hindi nahanap ang barcode: "${code}" sa imbentaryo.`, "error");
+      }
+      setBarcodeInput("");
+    }
+  };
 
   const showNotification = (message, type = "error") => {
     setNotification({ message, type });
@@ -270,13 +294,14 @@ export const CashierPOS = ({ embedded = false }) => {
           selling_price: priceNum, // Ginawang selling_price para tugma sa admin model ninyo
           stock_quantity: stockNum, // Ginawang stock_quantity para magkasundo sa admin model
           category: newProduct.category,
+          barcode_sku: newProduct.barcode_sku ? newProduct.barcode_sku.trim() : "N/A",
         },
         activeStoreId,
       );
 
       setProducts((prev) => [...prev, created]);
       setAddSuccess("Matagumpay na naidagdag ang produkto!");
-      setNewProduct({ name: "", price: "", stock: "", category: "Soda" });
+      setNewProduct({ name: "", price: "", stock: "", category: "Soda", barcode_sku: "" });
       setTimeout(() => {
         setIsAddModalOpen(false);
         setAddSuccess("");
@@ -361,6 +386,24 @@ export const CashierPOS = ({ embedded = false }) => {
           return item;
         })
         .filter((item) => item.quantity > 0),
+    );
+  };
+
+  const updateItemPrice = (id, newPrice) => {
+    const parsedPrice = parseFloat(newPrice);
+    if (isNaN(parsedPrice) || parsedPrice < 0) return;
+
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          return {
+            ...item,
+            price: parsedPrice,
+            selling_price: parsedPrice,
+          };
+        }
+        return item;
+      })
     );
   };
 
@@ -602,36 +645,11 @@ export const CashierPOS = ({ embedded = false }) => {
           </div>
         </div>
 
-        {/* Search & Filtering Area */}
+        {/* Search & Barcode Scan Area */}
         <div className="space-y-4 mb-6">
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#57534E]/50">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </span>
-            <input
-              type="text"
-              placeholder="Maghanap ng produkto ayon sa pangalan o kategorya..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-[#FAFAF9] border border-[#57534E]/20 rounded-xl text-sm text-[#0C0A09] placeholder-[#57534E]/50 focus:outline-none focus:ring-2 focus:ring-[#064E3B]/20 focus:border-[#064E3B] transition"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#57534E]/60 hover:text-[#0C0A09] cursor-pointer"
-              >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#57534E]/50">
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -642,11 +660,84 @@ export const CashierPOS = ({ embedded = false }) => {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
-              </button>
-            )}
+              </span>
+              <input
+                type="text"
+                placeholder="Maghanap ayon sa pangalan o kategorya..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-[#FAFAF9] border border-[#57534E]/20 rounded-xl text-sm text-[#0C0A09] placeholder-[#57534E]/50 focus:outline-none focus:ring-2 focus:ring-[#064E3B]/20 focus:border-[#064E3B] transition"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#57534E]/60 hover:text-[#0C0A09] cursor-pointer"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#57534E]/50">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 5h2v14H3V5zm4 0h1v14H7V5zm3 0h3v14h-3V5zm5 0h1v14h-1V5zm3 0h3v14h-3V5z"
+                  />
+                </svg>
+              </span>
+              <input
+                type="text"
+                placeholder="I-scan ang barcode at pindutin ang enter..."
+                value={barcodeInput}
+                onChange={(e) => setBarcodeInput(e.target.value)}
+                onKeyDown={handleBarcodeKeyDown}
+                className="w-full pl-10 pr-4 py-3 bg-[#FAFAF9] border border-[#57534E]/20 rounded-xl text-sm text-[#0C0A09] placeholder-[#57534E]/50 focus:outline-none focus:ring-2 focus:ring-[#064E3B]/20 focus:border-[#064E3B] transition font-mono"
+              />
+              {barcodeInput && (
+                <button
+                  onClick={() => setBarcodeInput("")}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#57534E]/60 hover:text-[#0C0A09] cursor-pointer"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
             {categories.map((cat) => (
@@ -898,9 +989,23 @@ export const CashierPOS = ({ embedded = false }) => {
                     <span className="font-bold text-[#0C0A09] block">
                       {item.name}
                     </span>
-                    <span className="text-[10px] text-[#57534E]">
-                      ₱{price} bawat isa
-                    </span>
+                    {item.barcode_sku && item.barcode_sku !== "N/A" ? (
+                      <span className="text-[10px] text-[#57534E] flex items-center gap-1 mt-0.5">
+                        <span>₱</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={price}
+                          onChange={(e) => updateItemPrice(item.id, e.target.value)}
+                          className="w-16 px-1.5 py-0.5 border border-stone-200 rounded text-xs font-mono font-bold focus:outline-none focus:border-[#064E3B] bg-white text-stone-900"
+                        />
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-[#57534E]">
+                        ₱{price} bawat isa
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
@@ -1325,6 +1430,20 @@ export const CashierPOS = ({ embedded = false }) => {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">
+                  Barcode / SKU (Opsyonal)
+                </label>
+                <input
+                  type="text"
+                  placeholder="I-scan o i-type ang Barcode"
+                  className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
+                  value={newProduct.barcode_sku}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, barcode_sku: e.target.value })
+                  }
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
