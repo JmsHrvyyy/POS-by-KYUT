@@ -12,8 +12,24 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
 import { getProductsByStore, addProduct } from "../../services/productService";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 const MOCK_STAFF = [
   {
@@ -39,7 +55,7 @@ const MOCK_STAFF = [
 const isMockStore = (id) => id?.startsWith("store_00");
 
 export const AdminDashboard = () => {
-  const { activeStoreId } = useAuth();
+  const { activeStoreId, activeStoreName } = useAuth();
 
   // ── Tab Navigation ────────────────────────────────────────────
   // Tatlo na ang pagpipilian ngayon: "inventory", "products", o "staff"
@@ -111,6 +127,37 @@ export const AdminDashboard = () => {
       setLoadingProds(false);
     }
   };
+
+  const [storeName, setStoreName] = useState("Ikinakarga...");
+
+  useEffect(() => {
+    const fetchStoreName = async () => {
+      if (!activeStoreId) {
+        setStoreName("Walang Aktibong Tindahan");
+        return;
+      }
+      if (isMockStore(activeStoreId)) {
+        setStoreName("Demo Branch Store");
+        return;
+      }
+      try {
+        // Hihilahin ang dokumento ng tindahan mula sa 'stores' collection
+        const storeDocRef = doc(db, "stores", activeStoreId);
+        const storeDocSnap = await getDoc(storeDocRef);
+
+        if (storeDocSnap.exists() && storeDocSnap.data().name) {
+          setStoreName(storeDocSnap.data().name); // Dito natin nakuha ang totoong name!
+        } else {
+          setStoreName("Tindahan (Walang Pangalan)");
+        }
+      } catch (err) {
+        console.error("Error fetching store name:", err);
+        setStoreName("Error sa Pag-load");
+      }
+    };
+
+    fetchStoreName();
+  }, [activeStoreId]);
 
   useEffect(() => {
     fetchProducts();
@@ -260,11 +307,7 @@ export const AdminDashboard = () => {
       const newTotalStock = selectedProduct.stock_quantity + addedStock;
 
       // I-update sa Firestore cloud
-      const docRef = doc(
-        db,
-        "products",
-        selectedProduct.id,
-      );
+      const docRef = doc(db, "products", selectedProduct.id);
       await updateDoc(docRef, { stock_quantity: newTotalStock });
 
       // I-update ang UI local state nang hindi na nagre-reload ang buong pahina
@@ -299,11 +342,7 @@ export const AdminDashboard = () => {
 
     try {
       setSavingProd(true);
-      const docRef = doc(
-        db,
-        "products",
-        selectedProduct.id,
-      );
+      const docRef = doc(db, "products", selectedProduct.id);
 
       const updatedData = {
         name: selectedProduct.name.trim(),
@@ -397,7 +436,9 @@ export const AdminDashboard = () => {
         ),
       );
       if (!dupeSnap.empty) {
-        setStaffError("Ang staff na ito ay nakatalaga na rito (o may pending invite).");
+        setStaffError(
+          "Ang staff na ito ay nakatalaga na rito (o may pending invite).",
+        );
         return;
       }
 
@@ -433,7 +474,9 @@ export const AdminDashboard = () => {
       } else {
         // User exists
         if (foundUser.global_role !== "staff") {
-          setStaffError("Ang account na ito ay rehistrado pero hindi Staff (Manager/Owner ito).");
+          setStaffError(
+            "Ang account na ito ay rehistrado pero hindi Staff (Manager/Owner ito).",
+          );
           return;
         }
 
@@ -486,7 +529,9 @@ export const AdminDashboard = () => {
   const handleUpdateStaffRole = async (staff, newRole) => {
     if (isMockStore(activeStoreId)) {
       setStaffList((prev) =>
-        prev.map((s) => (s.email === staff.email ? { ...s, role: newRole } : s))
+        prev.map((s) =>
+          s.email === staff.email ? { ...s, role: newRole } : s,
+        ),
       );
       showToast(`Role ng staff na si ${staff.name} ay binago sa ${newRole}!`);
       return;
@@ -496,7 +541,7 @@ export const AdminDashboard = () => {
       const docRef = doc(db, "store_staff", staff.id);
       await updateDoc(docRef, { role: newRole });
       setStaffList((prev) =>
-        prev.map((s) => (s.id === staff.id ? { ...s, role: newRole } : s))
+        prev.map((s) => (s.id === staff.id ? { ...s, role: newRole } : s)),
       );
       showToast(`Role ng staff na si ${staff.name} ay binago sa ${newRole}!`);
     } catch (err) {
@@ -523,10 +568,13 @@ export const AdminDashboard = () => {
       sub: `${activeStaffCount} aktibo ngayon`,
       colorClass: "text-[#57534E] bg-[#57534E]/10",
     },
+    // Stats Card Configuration
     {
-      name: "Store ID",
-      value: activeStoreId ? activeStoreId.slice(0, 12) + "…" : "—",
-      sub: isMockStore(activeStoreId) ? "Demo Mode" : "Live Firestore",
+      name: "Pangalan ng Tindahan",
+      value: storeName, // Ipapakita ang totoong pangalan ng branch o tindahan
+      sub: isMockStore(activeStoreId)
+        ? "Demo Mode"
+        : `ID: ${activeStoreId?.slice(0, 6)}...`, // Itatago ang mahabang ID sa maliit na subtext sa ilalim
       colorClass: "text-[#064E3B] bg-[#064E3B]/10",
     },
   ];
@@ -608,12 +656,15 @@ export const AdminDashboard = () => {
             </p>
           </div>
           {activeStoreId && (
-            <div className="flex items-center gap-2 bg-[#064E3B]/10 text-[#064E3B] border border-[#064E3B]/20 px-4 py-2.5 rounded-xl text-xs font-mono font-bold self-start">
+            <div className="flex items-center gap-2 bg-[#064E3B]/10 text-[#064E3B] border border-[#064E3B]/20 px-4 py-2.5 rounded-xl text-xs font-sans font-bold self-start">
               <span className="w-1.5 h-1.5 rounded-full bg-[#064E3B] animate-ping" />
-              {activeStoreId}
+              {storeName}{" "}
+              {/* Ito na ang gagamit ng totoong pangalan ng store */}
             </div>
           )}
         </header>
+
+        <AnalyticsSection />
 
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -856,7 +907,9 @@ export const AdminDashboard = () => {
                         <td className="py-3.5 text-[#57534E] font-medium">
                           <select
                             value={s.role}
-                            onChange={(e) => handleUpdateStaffRole(s, e.target.value)}
+                            onChange={(e) =>
+                              handleUpdateStaffRole(s, e.target.value)
+                            }
                             className="bg-stone-50 border border-stone-200 rounded px-2 py-1 text-xs font-semibold focus:outline-none focus:border-[#064E3B] cursor-pointer"
                           >
                             <option value="Cashier">Cashier</option>
@@ -1352,7 +1405,9 @@ export const AdminDashboard = () => {
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-stone-200">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-[#064E3B]">
-                {invitationInfo.exists ? "Itinalaga bilang Staff" : "Imbitasyon sa Staff"}
+                {invitationInfo.exists
+                  ? "Itinalaga bilang Staff"
+                  : "Imbitasyon sa Staff"}
               </h2>
               <button
                 onClick={() => setInvitationInfo(null)}
@@ -1366,11 +1421,22 @@ export const AdminDashboard = () => {
               <p className="text-xs text-stone-600 leading-relaxed">
                 {invitationInfo.exists ? (
                   <>
-                    Ang email na <strong className="text-stone-900">{invitationInfo.email}</strong> ay mayroon nang account. Maaari mo silang padalhan ng abiso na mag-login sa kanilang account para magbukas ang POS.
+                    Ang email na{" "}
+                    <strong className="text-stone-900">
+                      {invitationInfo.email}
+                    </strong>{" "}
+                    ay mayroon nang account. Maaari mo silang padalhan ng abiso
+                    na mag-login sa kanilang account para magbukas ang POS.
                   </>
                 ) : (
                   <>
-                    Ang email na <strong className="text-stone-900">{invitationInfo.email}</strong> ay wala pang account. Mangyaring ipadala ang mga sumusunod na tagubilin upang magrehistro sila bilang staff sa inyong tindahan.
+                    Ang email na{" "}
+                    <strong className="text-stone-900">
+                      {invitationInfo.email}
+                    </strong>{" "}
+                    ay wala pang account. Mangyaring ipadala ang mga sumusunod
+                    na tagubilin upang magrehistro sila bilang staff sa inyong
+                    tindahan.
                   </>
                 )}
               </p>
@@ -1403,7 +1469,10 @@ export const AdminDashboard = () => {
                   onClick={() => {
                     const subject = encodeURIComponent(invitationInfo.subject);
                     const body = encodeURIComponent(invitationInfo.body);
-                    window.open(`mailto:${invitationInfo.email}?subject=${subject}&body=${body}`, "_blank");
+                    window.open(
+                      `mailto:${invitationInfo.email}?subject=${subject}&body=${body}`,
+                      "_blank",
+                    );
                   }}
                   className="flex-1 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white rounded-xl text-xs font-bold transition cursor-pointer text-center"
                 >
@@ -1427,6 +1496,217 @@ export const AdminDashboard = () => {
           {toast.message}
         </div>
       )}
+    </div>
+  );
+};
+
+// ─── I-PASTE ITO SA PINAKADULONG BAHAGI NG FILE (PAREHONG FILE) ───
+
+const COLORS = ["#064E3B", "#047857", "#10B981", "#34D399", "#A7F3D0"];
+
+const MOCK_SALES_DATA = [
+  { date: "Mon", benta: 4200 },
+  { date: "Tue", benta: 5100 },
+  { date: "Wed", benta: 3800 },
+  { date: "Thu", benta: 6200 },
+  { date: "Fri", benta: 7500 },
+  { date: "Sat", benta: 8900 },
+  { date: "Sun", benta: 9400 },
+];
+
+const MOCK_TOP_PRODUCTS = [
+  { name: "Coca-Cola 1.5L", sold: 120 },
+  { name: "White Bread", sold: 85 },
+  { name: "Instant Noodles", sold: 74 },
+  { name: "Kape Barako", sold: 50 },
+  { name: "Sardines", sold: 42 },
+];
+
+const MOCK_STOCK_DISTRIBUTION = [
+  { name: "Soda", value: 40 },
+  { name: "Bakery", value: 25 },
+  { name: "Chips", value: 20 },
+  { name: "Noodles", value: 15 },
+  { name: "Coffee", value: 10 },
+];
+
+const AnalyticsSection = () => {
+  return (
+    <div className="space-y-6 my-6">
+      {/* CARD 1: Sales Analytics */}
+      <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className="text-sm font-extrabold text-[#064E3B] uppercase tracking-wider">
+              Ulat ng Benta (Sales Performance)
+            </h3>
+            <p className="text-xs text-[#57534E]">
+              Visual na takbo ng kabuuang kita ngayong linggo
+            </p>
+          </div>
+          <span className="text-[10px] font-bold text-[#064E3B] bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-xl uppercase tracking-wider">
+            Live
+          </span>
+        </div>
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={MOCK_SALES_DATA}
+              margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F4" />
+              <XAxis
+                dataKey="date"
+                stroke="#57534E"
+                fontSize={11}
+                tickLine={false}
+              />
+              <YAxis stroke="#57534E" fontSize={11} tickLine={false} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#0C0A09",
+                  borderRadius: "12px",
+                  border: "none",
+                }}
+                labelStyle={{ color: "#FFF", fontWeight: "bold" }}
+                itemStyle={{ color: "#A7F3D0" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="benta"
+                name="Kita (₱)"
+                stroke="#064E3B"
+                strokeWidth={3}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* LOWER GRID: Dalawang magkatabing Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* CARD 2: Top Products */}
+        <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-extrabold text-[#064E3B] uppercase tracking-wider mb-1">
+              Pinakamabentang Produkto
+            </h3>
+            <p className="text-xs text-[#57534E] mb-6">
+              Top 5 items na may pinakamaraming quantity na naibenta
+            </p>
+          </div>
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={MOCK_TOP_PRODUCTS}
+                layout="vertical"
+                margin={{ top: 0, right: 10, left: 10, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#F5F5F4"
+                  horizontal={false}
+                />
+                <XAxis
+                  type="number"
+                  stroke="#57534E"
+                  fontSize={11}
+                  tickLine={false}
+                />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  stroke="#57534E"
+                  fontSize={10}
+                  tickLine={false}
+                  width={85}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#0C0A09",
+                    borderRadius: "12px",
+                    border: "none",
+                  }}
+                  itemStyle={{ color: "#fff" }}
+                />
+                <Bar
+                  dataKey="sold"
+                  name="Naibenta"
+                  fill="#047857"
+                  radius={[0, 6, 6, 0]}
+                  barSize={14}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* CARD 3: Stock Distribution */}
+        <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-extrabold text-[#064E3B] uppercase tracking-wider mb-1">
+              Distribusyon ng Imbentaryo
+            </h3>
+            <p className="text-xs text-[#57534E] mb-4">
+              Porsyento ng mga produkto sa loob ng bawat Kategorya
+            </p>
+          </div>
+          <div className="h-56 w-full flex flex-col sm:flex-row items-center justify-center gap-2">
+            <div className="w-1/2 h-full min-h-[140px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={MOCK_STOCK_DISTRIBUTION}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={45}
+                    outerRadius={65}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {MOCK_STOCK_DISTRIBUTION.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#0C0A09",
+                      borderRadius: "12px",
+                      border: "none",
+                    }}
+                    itemStyle={{ color: "#fff" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-col gap-1 w-full sm:w-1/2 px-2">
+              {MOCK_STOCK_DISTRIBUTION.map((entry, index) => (
+                <div
+                  key={entry.name}
+                  className="flex items-center justify-between text-[11px]"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="w-2.5 h-2.5 rounded-md flex-shrink-0"
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="font-bold text-[#57534E]">
+                      {entry.name}
+                    </span>
+                  </div>
+                  <span className="font-mono font-extrabold text-[#0C0A09]">
+                    {entry.value}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
