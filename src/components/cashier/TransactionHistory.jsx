@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { Navbar } from "../shared/Navbar";
 import { useAuth } from "../../context/AuthContext";
 import { getOrdersByStore } from "../../services/orderService";
+import { db } from "../../config/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { getProductsByStore } from "../../services/productService";
 
 const formatDate = (timestamp) => {
   if (!timestamp) return "—";
@@ -32,6 +35,8 @@ const formatTime = (timestamp) => {
 export const TransactionHistory = () => {
   const { activeStoreId } = useAuth();
   const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [storeCurrency, setStoreCurrency] = useState("₱");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -39,26 +44,43 @@ export const TransactionHistory = () => {
   const [dateFilter, setDateFilter] = useState("all"); // all | today | week | month
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      await Promise.resolve();
+    const fetchStoreData = async () => {
       if (!activeStoreId) {
         setOrders([]);
+        setProducts([]);
         setLoading(false);
         return;
       }
       try {
         setLoading(true);
         setError("");
-        const data = await getOrdersByStore(activeStoreId);
-        setOrders(data);
+        const [ordersData, productsData] = await Promise.all([
+          getOrdersByStore(activeStoreId),
+          getProductsByStore(activeStoreId),
+        ]);
+        setOrders(ordersData);
+        setProducts(productsData);
+
+        // Fetch store currency if not a mock store
+        if (activeStoreId.startsWith("store_00")) {
+          setStoreCurrency("₱");
+        } else {
+          const storeDocRef = doc(db, "stores", activeStoreId);
+          const storeDocSnap = await getDoc(storeDocRef);
+          if (storeDocSnap.exists() && storeDocSnap.data().currency) {
+            setStoreCurrency(storeDocSnap.data().currency);
+          } else {
+            setStoreCurrency("₱");
+          }
+        }
       } catch (err) {
-        console.error("Error fetching orders:", err);
-        setError("Hindi ma-load ang mga transaksyon. Subukan muli.");
+        console.error("Error fetching store data:", err);
+        setError("Hindi ma-load ang mga transaksyon at produkto. Subukan muli.");
       } finally {
         setLoading(false);
       }
     };
-    fetchOrders();
+    fetchStoreData();
   }, [activeStoreId]);
 
   // ── Filtering logic ──────────────────────────────────────────────────────────
@@ -88,6 +110,15 @@ export const TransactionHistory = () => {
   });
 
   // ── Summary stats ────────────────────────────────────────────────────────────
+  const productCostMap = {};
+  const productPriceMap = {};
+  products.forEach((p) => {
+    if (p.name) {
+      productCostMap[p.name] = Number(p.cost_price) || 0;
+      productPriceMap[p.name] = Number(p.selling_price) || 0;
+    }
+  });
+
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + (o.total || 0), 0);
   const totalTransactions = filteredOrders.length;
   const totalItems = filteredOrders.reduce(
@@ -95,6 +126,23 @@ export const TransactionHistory = () => {
     0
   );
   const avgOrderValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+
+  const totalProfit = filteredOrders.reduce((sumProfit, order) => {
+    let orderCost = 0;
+    let orderRevenue = 0;
+    if (order.items && Array.isArray(order.items)) {
+      order.items.forEach((item) => {
+        const qty = Number(item.quantity) || 0;
+        const price = Number(item.price) || productPriceMap[item.name] || 0;
+        const cost = productCostMap[item.name] || 0;
+        orderCost += cost * qty;
+        orderRevenue += price * qty;
+      });
+    }
+    const profitMargin = orderRevenue > 0 ? (orderRevenue - orderCost) / orderRevenue : 0;
+    const orderProfit = (Number(order.total) || 0) * profitMargin;
+    return sumProfit + (orderProfit > 0 ? orderProfit : 0);
+  }, 0);
 
   // ── Handle print single order ─────────────────────────────────────────────────
   const handlePrint = (order) => {
@@ -106,16 +154,16 @@ export const TransactionHistory = () => {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
         <div style="flex:1;padding-right:12px;">
           <span style="font-weight:700;color:#0C0A09;display:block;">${item.name}</span>
-          <span style="font-size:10px;color:#57534E;">${item.quantity} x \u20B1${item.price.toFixed(2)}</span>
+          <span style="font-size:10px;color:#57534E;">${item.quantity} x ${storeCurrency}${item.price.toFixed(2)}</span>
         </div>
-        <span style="font-weight:700;color:#0C0A09;">\u20B1${(item.quantity * item.price).toFixed(2)}</span>
+        <span style="font-weight:700;color:#0C0A09;">${storeCurrency}${(item.quantity * item.price).toFixed(2)}</span>
       </div>
     `).join("") || "";
 
     const discountHtml = order.discount > 0 ? `
       <div style="display:flex;justify-content:space-between;color:#F97316;">
         <span>Discount (${order.discount}%):</span>
-        <span style="font-weight:700;">-\u20B1${((order.subtotal * order.discount) / 100).toFixed(2)}</span>
+        <span style="font-weight:700;">-${storeCurrency}${((order.subtotal * order.discount) / 100).toFixed(2)}</span>
       </div>
     ` : "";
 
@@ -151,12 +199,12 @@ export const TransactionHistory = () => {
           <div style="padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;font-size:11px;color:#57534E;">
             <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
               <span>Subtotal:</span>
-              <span style="font-weight:700;color:#0C0A09;">\u20B1${order.subtotal?.toFixed(2)}</span>
+              <span style="font-weight:700;color:#0C0A09;">${storeCurrency}${order.subtotal?.toFixed(2)}</span>
             </div>
             ${discountHtml}
             <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;color:#0C0A09;padding-top:8px;border-top:1px dashed #ccc;margin-top:6px;">
               <span>KABUUAN:</span>
-              <span style="color:#064E3B;">\u20B1${order.total?.toFixed(2)}</span>
+              <span style="color:#064E3B;">${storeCurrency}${order.total?.toFixed(2)}</span>
             </div>
           </div>
           <div style="text-align:center;font-size:9px;color:#57534E;padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;">
@@ -209,7 +257,11 @@ export const TransactionHistory = () => {
                 <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">Transaksyon</div>
               </div>
               <div className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-center min-w-[110px]">
-                <div className="text-xl font-extrabold">₱{totalRevenue.toFixed(2)}</div>
+                <div className="text-xl font-extrabold">{storeCurrency}{totalRevenue.toFixed(2)}</div>
+                <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">Kabuuang Benta</div>
+              </div>
+              <div className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-center min-w-[110px]">
+                <div className="text-xl font-extrabold">{storeCurrency}{totalProfit.toFixed(2)}</div>
                 <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">Kabuuang Kita</div>
               </div>
               <div className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-center min-w-[90px]">
@@ -335,11 +387,27 @@ export const TransactionHistory = () => {
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
-              {filteredOrders.length} resulta · Average order: ₱{avgOrderValue.toFixed(2)}
+              {filteredOrders.length} resulta · Average order: {storeCurrency}{avgOrderValue.toFixed(2)}
             </div>
 
             {filteredOrders.map((order) => {
               const itemCount = order.items?.reduce((s, i) => s + i.quantity, 0) || 0;
+              // Calculate order profit
+              let orderCost = 0;
+              let orderRevenue = 0;
+              if (order.items && Array.isArray(order.items)) {
+                order.items.forEach((item) => {
+                  const qty = Number(item.quantity) || 0;
+                  const price = Number(item.price) || productPriceMap[item.name] || 0;
+                  const cost = productCostMap[item.name] || 0;
+                  orderCost += cost * qty;
+                  orderRevenue += price * qty;
+                });
+              }
+              const profitMargin = orderRevenue > 0 ? (orderRevenue - orderCost) / orderRevenue : 0;
+              const orderProfit = (Number(order.total) || 0) * profitMargin;
+              const displayProfit = orderProfit > 0 ? orderProfit : 0;
+
               return (
                 <div
                   key={order.id}
@@ -362,7 +430,7 @@ export const TransactionHistory = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-extrabold text-sm text-[#0C0A09]">
-                          ₱{order.total?.toFixed(2)}
+                          {storeCurrency}{order.total?.toFixed(2)}
                         </span>
                         {order.discount > 0 && (
                           <span className="text-[10px] bg-[#F97316]/10 text-[#F97316] font-bold px-1.5 py-0.5 rounded-md">
@@ -381,6 +449,8 @@ export const TransactionHistory = () => {
                         <span className="font-bold">{order.cashier_name || "—"}</span>
                         <span className="text-[#57534E]/40 mx-1.5">·</span>
                         <span>{itemCount} item{itemCount !== 1 ? "s" : ""}</span>
+                        <span className="text-[#57534E]/40 mx-1.5">·</span>
+                        <span className="text-emerald-700 font-semibold">Kita: {storeCurrency}{displayProfit.toFixed(2)}</span>
                       </div>
                     </div>
 
@@ -431,10 +501,10 @@ export const TransactionHistory = () => {
                               <div key={idx} className="flex justify-between items-start text-xs">
                                 <div className="flex-1 pr-3">
                                   <span className="font-bold text-[#0C0A09] block">{item.name}</span>
-                                  <span className="text-[#57534E]/60">{item.quantity} x ₱{item.price?.toFixed(2)}</span>
+                                  <span className="text-[#57534E]/60">{item.quantity} x {storeCurrency}{item.price?.toFixed(2)}</span>
                                 </div>
                                 <span className="font-bold text-[#0C0A09]">
-                                  ₱{(item.quantity * item.price).toFixed(2)}
+                                  {storeCurrency}{(item.quantity * item.price).toFixed(2)}
                                 </span>
                               </div>
                             ))}
@@ -448,17 +518,21 @@ export const TransactionHistory = () => {
                           </div>
                           <div className="flex justify-between text-[#57534E]">
                             <span>Subtotal:</span>
-                            <span className="font-bold text-[#0C0A09]">₱{order.subtotal?.toFixed(2)}</span>
+                            <span className="font-bold text-[#0C0A09]">{storeCurrency}{order.subtotal?.toFixed(2)}</span>
                           </div>
                           {order.discount > 0 && (
                             <div className="flex justify-between text-[#F97316]">
                               <span>Discount ({order.discount}%):</span>
-                              <span className="font-bold">-₱{((order.subtotal * order.discount) / 100).toFixed(2)}</span>
+                              <span className="font-bold">-{storeCurrency}{((order.subtotal * order.discount) / 100).toFixed(2)}</span>
                             </div>
                           )}
                           <div className="flex justify-between font-extrabold text-[#0C0A09] pt-1.5 border-t border-dashed border-[#57534E]/20">
                             <span>KABUUAN:</span>
-                            <span className="text-[#064E3B]">₱{order.total?.toFixed(2)}</span>
+                            <span className="text-[#064E3B]">{storeCurrency}{order.total?.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between font-bold text-emerald-700 mt-1">
+                            <span>KITA:</span>
+                            <span>{storeCurrency}{displayProfit.toFixed(2)}</span>
                           </div>
                           <div className="pt-2 mt-1 border-t border-[#57534E]/10 space-y-1 text-[#57534E]/70">
                             <div className="flex justify-between">

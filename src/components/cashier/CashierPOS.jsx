@@ -636,14 +636,6 @@ export const CashierPOS = ({ embedded = false }) => {
           <div className="flex items-center gap-3.5 self-start sm:self-center">
             {activeStoreId && (
               <>
-                {userRole !== "staff" && (
-                  <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="px-3 py-1.5 bg-[#064E3B] hover:bg-[#064E3B]/95 text-white text-[10px] font-extrabold uppercase rounded-xl transition cursor-pointer shadow-sm"
-                  >
-                    + Magdagdag ng Produkto
-                  </button>
-                )}
                 <span className="text-[10px] font-bold text-[#57534E] uppercase tracking-wider bg-[#57534E]/10 px-2.5 py-1.5 rounded-xl">
                   Store ID: {activeStoreId}
                 </span>
@@ -805,14 +797,8 @@ export const CashierPOS = ({ embedded = false }) => {
                 Walang Produkto sa Tindahang Ito
               </h3>
               <p className="text-xs text-[#57534E] mt-1 max-w-[240px] leading-relaxed">
-                Wala pang paninda ang tindahang ito sa database.
+                Wala pang paninda ang tindahang ito sa database. Pumunta sa Admin Dashboard upang magdagdag ng produkto.
               </p>
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="mt-4 px-4 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                <span>Magdagdag ng Produkto</span>
-              </button>
             </div>
           ) : filteredCatalog.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
@@ -1340,164 +1326,7 @@ export const CashierPOS = ({ embedded = false }) => {
         </div>
       )}
 
-      {/* Modal: Add Product */}
-      {isAddModalOpen && userRole !== "staff" && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-[#57534E]/10">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-[#064E3B]">
-                Magdagdag ng Produkto
-              </h2>
-              <button
-                onClick={() => setIsAddModalOpen(false)}
-                className="p-1 rounded-lg hover:bg-[#57534E]/10 transition text-[#57534E]/70 cursor-pointer"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2.5"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            {addError && (
-              <div className="bg-[#F97316]/10 border border-[#F97316]/20 text-[#F97316] p-3 rounded-xl text-xs mb-4">
-                {addError}
-              </div>
-            )}
-            {addSuccess && (
-              <div className="bg-emerald-50 border border-emerald-100 text-[#064E3B] p-3 rounded-xl text-xs mb-4">
-                {addSuccess}
-              </div>
-            )}
-            <form onSubmit={handleAddProduct} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">
-                  Pangalan ng Produkto
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Hal. Coca-Cola 1.5L"
-                  className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
-                  value={newProduct.name}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">
-                  Kategorya
-                </label>
-                <select
-                  className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl bg-white focus:outline-none focus:border-[#064E3B] text-sm"
-                  value={newProduct.category}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, category: e.target.value })
-                  }
-                >
-                  {[
-                    "Soda",
-                    "Bakery",
-                    "Chips",
-                    "Noodles",
-                    "Coffee",
-                    "Canned Goods",
-                    "Others",
-                  ].map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">
-                    Presyo (₱)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    placeholder="0.00"
-                    className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
-                    value={newProduct.price}
-                    onChange={(e) =>
-                      setNewProduct({ ...newProduct, price: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-[#57534E]">
-                    Dami (Stock)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="0"
-                    className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
-                    value={newProduct.stock}
-                    onChange={(e) =>
-                      setNewProduct({ ...newProduct, stock: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 pt-4 border-t border-[#57534E]/10 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1 py-3 border border-[#57534E]/20 rounded-xl text-xs font-bold text-[#57534E] hover:bg-[#57534E]/5 transition cursor-pointer"
-                >
-                  Banselahin
-                </button>
-                <button
-                  type="submit"
-                  disabled={addingProduct}
-                  className="flex-1 py-3 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white rounded-xl text-xs font-bold transition flex justify-center items-center gap-1.5 disabled:opacity-75 cursor-pointer"
-                >
-                  {addingProduct ? (
-                    <>
-                      <svg
-                        className="animate-spin h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      <span>Naililikha...</span>
-                    </>
-                  ) : (
-                    <span>Likhain</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
 
       {/* Modal: Barcode Scanner */}
       {isScannerOpen && (
