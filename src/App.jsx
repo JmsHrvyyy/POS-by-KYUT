@@ -14,6 +14,7 @@ import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { CashierPOS } from "./components/cashier/CashierPOS";
 import { TransactionHistory } from "./components/cashier/TransactionHistory";
 import { DigitalReceipt } from "./components/shared/DigitalReceipt";
+import { CustomerDisplay } from "./components/cashier/CustomerDisplay";
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/cashier/pos" element={<CashierPOS />} />
           <Route path="/cashier/transactions" element={<TransactionHistory />} />
+          <Route path="/pos/customer-display" element={<CustomerDisplay />} />
 
           {/* Default Route: Kapag walang match o hindi valid ang URL, ibabalik sa login sa pasimula */}
           <Route path="*" element={<Navigate to="/login" replace />} />

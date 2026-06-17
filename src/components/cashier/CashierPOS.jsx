@@ -241,6 +241,8 @@ export const CashierPOS = ({ embedded = false }) => {
     }
   };
 
+
+
   useEffect(() => {
     const fetchProducts = async () => {
       await Promise.resolve();
@@ -411,6 +413,20 @@ export const CashierPOS = ({ embedded = false }) => {
   }, 0);
   const discountAmount = (subtotal * discount) / 100;
   const total = subtotal - discountAmount;
+
+  // Real-time synchronization to Customer Display (2nd Screen)
+  useEffect(() => {
+    try {
+      const cartPayload = { items: cart, subtotal, discount, total };
+      localStorage.setItem("customer_cart", JSON.stringify(cartPayload));
+
+      const bc = new BroadcastChannel("customer_display");
+      bc.postMessage({ type: "UPDATE_CART", ...cartPayload });
+      bc.close();
+    } catch (err) {
+      console.error("Failed to broadcast cart update:", err);
+    }
+  }, [cart, subtotal, discount, total]);
 
   const handlePrint = (order) => {
     const orderDate = order.created_at?.toDate
@@ -937,14 +953,27 @@ export const CashierPOS = ({ embedded = false }) => {
               </svg>
               Kasalukuyang Cart
             </h3>
-            {cart.length > 0 && (
+            <div className="flex items-center gap-3">
               <button
-                onClick={clearCart}
-                className="text-xs text-[#F97316] font-bold hover:underline cursor-pointer"
+                type="button"
+                onClick={() => window.open("/pos/customer-display", "CustomerDisplay", "width=1000,height=700")}
+                className="text-[10px] uppercase font-bold text-[#064E3B] hover:text-[#064E3B]/80 flex items-center gap-1.5 bg-[#064E3B]/10 hover:bg-[#064E3B]/15 px-2.5 py-1.5 rounded-xl transition cursor-pointer"
+                title="Buksan ang Display sa Customer Monitor"
               >
-                I-clear
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Customer Display
               </button>
-            )}
+              {cart.length > 0 && (
+                <button
+                  onClick={clearCart}
+                  className="text-xs text-[#F97316] font-bold hover:underline cursor-pointer"
+                >
+                  I-clear
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3 max-h-[260px] overflow-y-auto pr-1">
