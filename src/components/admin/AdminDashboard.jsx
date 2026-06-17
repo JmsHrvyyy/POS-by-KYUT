@@ -68,8 +68,10 @@ export const AdminDashboard = () => {
   }, [userRole, navigate]);
 
   // ── Tab Navigation ────────────────────────────────────────────
-  // Tatlo na ang pagpipilian ngayon: "inventory", "products", o "staff"
-  const [activeTab, setActiveTab] = useState("inventory");
+  // Main tabs: "inventory", "analytics", "settings". Inventory has inner sub-tabs.
+  const [mainTab, setMainTab] = useState("inventory");
+
+  const [subTab, setSubTab] = useState("inventory");
 
   // ── Inventory & Products State ────────────────────────────────
   const [products, setProducts] = useState([]);
@@ -164,35 +166,78 @@ export const AdminDashboard = () => {
   };
 
   const [storeName, setStoreName] = useState("Ikinakarga...");
+  const [storeDetails, setStoreDetails] = useState({ name: "", industry: "", address: "", contact: "", currency: "PHP" });
+  const [loadingStoreDetails, setLoadingStoreDetails] = useState(false);
+  const [savingStoreDetails, setSavingStoreDetails] = useState(false);
 
   useEffect(() => {
     const fetchStoreName = async () => {
       if (!activeStoreId) {
         setStoreName("Walang Aktibong Tindahan");
+        setStoreDetails({ name: "", industry: "", address: "", contact: "", currency: "PHP" });
         return;
       }
       if (isMockStore(activeStoreId)) {
         setStoreName("Demo Branch Store");
+        setStoreDetails({ name: "Demo Branch Store", industry: "Retail", address: "", contact: "", currency: "PHP" });
         return;
       }
       try {
+        setLoadingStoreDetails(true);
         // Hihilahin ang dokumento ng tindahan mula sa 'stores' collection
         const storeDocRef = doc(db, "stores", activeStoreId);
         const storeDocSnap = await getDoc(storeDocRef);
 
-        if (storeDocSnap.exists() && storeDocSnap.data().name) {
-          setStoreName(storeDocSnap.data().name); // Dito natin nakuha ang totoong name!
+        if (storeDocSnap.exists()) {
+          const data = storeDocSnap.data();
+          setStoreName(data.name || "Tindahan (Walang Pangalan)");
+          setStoreDetails({
+            name: data.name || "",
+            industry: data.industry || "",
+            address: data.address || "",
+            contact: data.contact || "",
+            currency: data.currency || "PHP",
+          });
         } else {
           setStoreName("Tindahan (Walang Pangalan)");
         }
       } catch (err) {
         console.error("Error fetching store name:", err);
         setStoreName("Error sa Pag-load");
+      } finally {
+        setLoadingStoreDetails(false);
       }
     };
 
     fetchStoreName();
   }, [activeStoreId]);
+
+  const handleSaveStoreDetails = async (e) => {
+    e?.preventDefault();
+    if (!activeStoreId || isMockStore(activeStoreId)) {
+      showToast("Hindi pwedeng i-save sa demo mode.", "error");
+      return;
+    }
+    try {
+      setSavingStoreDetails(true);
+      const docRef = doc(db, "stores", activeStoreId);
+      await updateDoc(docRef, {
+        name: storeDetails.name,
+        industry: storeDetails.industry,
+        address: storeDetails.address,
+        contact: storeDetails.contact,
+        currency: storeDetails.currency,
+        updated_at: serverTimestamp(),
+      });
+      setStoreName(storeDetails.name);
+      showToast("Tindahan na-update nang matagumpay.");
+    } catch (err) {
+      console.error("Error saving store details:", err);
+      showToast("Hindi na-save ang mga setting.", "error");
+    } finally {
+      setSavingStoreDetails(false);
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -616,7 +661,7 @@ export const AdminDashboard = () => {
   ];
 
   // ── NA-UPDATE NA TABS MENU (May gitnang Product Manager Tab) ──
-  const tabs = [
+  const innerTabs = [
     {
       key: "inventory",
       label: "Imbentaryo View",
@@ -700,13 +745,64 @@ export const AdminDashboard = () => {
           )}
         </header>
 
-        <AnalyticsSection
-          products={products}
-          orders={orders}
-          isMock={isMockStore(activeStoreId)}
-          loading={loadingProds || loadingOrders}
-        />
+        {/* Main Tabs Nav */}
+        <div className="mb-6">
+          <div className="flex gap-2">
+            <button onClick={() => setMainTab("inventory")} className={`px-3 py-2 rounded-xl text-sm font-bold ${mainTab === "inventory" ? "bg-white text-[#064E3B] border border-[#064E3B]/10" : "text-[#57534E]"}`}>
+              Inventory
+            </button>
+            <button onClick={() => setMainTab("analytics")} className={`px-3 py-2 rounded-xl text-sm font-bold ${mainTab === "analytics" ? "bg-white text-[#064E3B] border border-[#064E3B]/10" : "text-[#57534E]"}`}>
+              Analytics
+            </button>
+            <button onClick={() => setMainTab("settings")} className={`px-3 py-2 rounded-xl text-sm font-bold ${mainTab === "settings" ? "bg-white text-[#064E3B] border border-[#064E3B]/10" : "text-[#57534E]"}`}>
+              Settings
+            </button>
+          </div>
+        </div>
 
+        {mainTab === "analytics" && (
+          <AnalyticsSection
+            products={products}
+            orders={orders}
+            isMock={isMockStore(activeStoreId)}
+            loading={loadingProds || loadingOrders}
+          />
+        )}
+
+        {mainTab === "settings" && (
+          <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm mb-8">
+            <h3 className="text-lg font-bold text-[#064E3B]">Store Settings</h3>
+            <p className="text-xs text-[#57534E] mb-4">I-update ang pangalan, industriya, address, contact at currency ng tindahan.</p>
+            <form onSubmit={handleSaveStoreDetails} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold mb-1">Pangalan ng Tindahan</label>
+                <input className="w-full px-4 py-2 border rounded-xl text-sm" value={storeDetails.name} onChange={(e)=>setStoreDetails({...storeDetails,name:e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1">Industriya</label>
+                <input className="w-full px-4 py-2 border rounded-xl text-sm" value={storeDetails.industry} onChange={(e)=>setStoreDetails({...storeDetails,industry:e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1">Address</label>
+                <input className="w-full px-4 py-2 border rounded-xl text-sm" value={storeDetails.address} onChange={(e)=>setStoreDetails({...storeDetails,address:e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1">Contact</label>
+                <input className="w-full px-4 py-2 border rounded-xl text-sm" value={storeDetails.contact} onChange={(e)=>setStoreDetails({...storeDetails,contact:e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1">Currency</label>
+                <input className="w-full px-4 py-2 border rounded-xl text-sm" value={storeDetails.currency} onChange={(e)=>setStoreDetails({...storeDetails,currency:e.target.value})} />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={()=>{ /* cancel */ }} className="flex-1 py-2.5 border rounded-xl text-xs font-bold text-[#57534E]">Kanselahin</button>
+                <button type="submit" disabled={savingStoreDetails} className="flex-1 py-2.5 bg-[#064E3B] text-white rounded-xl text-xs font-bold">{savingStoreDetails?"Ise-save...":"I-save"}</button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {mainTab === "inventory" && (
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {stats.map((stat, i) => (
@@ -728,17 +824,18 @@ export const AdminDashboard = () => {
             </div>
           ))}
         </div>
+        )}
 
         {/* Dynamic Control Panel Grid */}
         <div className="bg-white rounded-2xl border border-[#57534E]/15 shadow-sm overflow-hidden">
           {/* Tabs Control Line */}
           <div className="flex border-b border-[#57534E]/10 bg-[#FAFAF9]/60 px-4 pt-3 gap-1">
-            {tabs.map((tab) => (
+            {innerTabs.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => setSubTab(tab.key)}
                 className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all border-b-2 -mb-px cursor-pointer ${
-                  activeTab === tab.key
+                  subTab === tab.key
                     ? "border-[#064E3B] text-[#064E3B] bg-white"
                     : "border-transparent text-[#57534E]/70 hover:text-[#57534E]"
                 }`}
@@ -750,7 +847,7 @@ export const AdminDashboard = () => {
           </div>
 
           {/* VIEW TAB: Inventory Preview List */}
-          {activeTab === "inventory" && (
+          {mainTab === "inventory" && subTab === "inventory" && (
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <div>
@@ -811,7 +908,7 @@ export const AdminDashboard = () => {
           )}
 
           {/* ── BAGONG TAB VIEW: PRODUCTS MANAGEMENT ACTIONS (RESTOCK / EDIT / REMOVE) ── */}
-          {activeTab === "products" && (
+          {mainTab === "inventory" && subTab === "products" && (
             <div className="p-6">
               <div>
                 <h3 className="text-lg font-bold text-[#064E3B]">
@@ -912,7 +1009,7 @@ export const AdminDashboard = () => {
           )}
 
           {/* STAFF TAB VIEW */}
-          {activeTab === "staff" && (
+          {mainTab === "inventory" && subTab === "staff" && (
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <div>
