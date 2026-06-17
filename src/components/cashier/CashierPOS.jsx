@@ -1,8 +1,9 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "../shared/Navbar";
 import { useAuth } from "../../context/AuthContext";
 import { getProductsByStore, addProduct } from "../../services/productService";
 import { placeOrder } from "../../services/orderService";
+import { Html5Qrcode } from "html5-qrcode";
 
 // Color gradients for different categories to make the grid pop visually
 const categoryGradients = {
@@ -179,7 +180,7 @@ const renderCategoryIcon = (category) => {
 };
 
 export const CashierPOS = ({ embedded = false }) => {
-  const { activeStoreId, currentUser } = useAuth();
+  const { activeStoreId, currentUser, userRole } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -206,12 +207,38 @@ export const CashierPOS = ({ embedded = false }) => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [notification, setNotification] = useState(null);
 
+  // Scanner states
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [continuousScan, setContinuousScan] = useState(true);
+
   const showNotification = (message, type = "error") => {
     setNotification({ message, type });
     const timer = setTimeout(() => {
       setNotification(null);
     }, 3000);
     return () => clearTimeout(timer);
+  };
+
+  const playBeep = () => {
+    try {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtxClass) return;
+      const audioCtx = new AudioCtxClass();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); // High pitch beep
+      gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.08);
+    } catch (err) {
+      console.error("Audio beep failed:", err);
+    }
   };
 
   useEffect(() => {
@@ -244,6 +271,11 @@ export const CashierPOS = ({ embedded = false }) => {
     e.preventDefault();
     setAddError("");
     setAddSuccess("");
+
+    if (userRole === "staff") {
+      setAddError("Hindi pinapayagan ang mga staff na magdagdag ng produkto.");
+      return;
+    }
 
     if (!newProduct.name.trim()) {
       setAddError("Kinakailangan ang pangalan ng produkto.");
@@ -588,12 +620,14 @@ export const CashierPOS = ({ embedded = false }) => {
           <div className="flex items-center gap-3.5 self-start sm:self-center">
             {activeStoreId && (
               <>
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="px-3 py-1.5 bg-[#064E3B] hover:bg-[#064E3B]/95 text-white text-[10px] font-extrabold uppercase rounded-xl transition cursor-pointer shadow-sm"
-                >
-                  + Magdagdag ng Produkto
-                </button>
+                {userRole !== "staff" && (
+                  <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="px-3 py-1.5 bg-[#064E3B] hover:bg-[#064E3B]/95 text-white text-[10px] font-extrabold uppercase rounded-xl transition cursor-pointer shadow-sm"
+                  >
+                    + Magdagdag ng Produkto
+                  </button>
+                )}
                 <span className="text-[10px] font-bold text-[#57534E] uppercase tracking-wider bg-[#57534E]/10 px-2.5 py-1.5 rounded-xl">
                   Store ID: {activeStoreId}
                 </span>
@@ -604,34 +638,9 @@ export const CashierPOS = ({ embedded = false }) => {
 
         {/* Search & Filtering Area */}
         <div className="space-y-4 mb-6">
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#57534E]/50">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </span>
-            <input
-              type="text"
-              placeholder="Maghanap ng produkto ayon sa pangalan o kategorya..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-[#FAFAF9] border border-[#57534E]/20 rounded-xl text-sm text-[#0C0A09] placeholder-[#57534E]/50 focus:outline-none focus:ring-2 focus:ring-[#064E3B]/20 focus:border-[#064E3B] transition"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#57534E]/60 hover:text-[#0C0A09] cursor-pointer"
-              >
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-[#57534E]/50">
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -642,11 +651,66 @@ export const CashierPOS = ({ embedded = false }) => {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
-              </button>
-            )}
+              </span>
+              <input
+                type="text"
+                placeholder="Maghanap ng produkto ayon sa pangalan o kategorya..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-[#FAFAF9] border border-[#57534E]/20 rounded-xl text-sm text-[#0C0A09] placeholder-[#57534E]/50 focus:outline-none focus:ring-2 focus:ring-[#064E3B]/20 focus:border-[#064E3B] transition"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#57534E]/60 hover:text-[#0C0A09] cursor-pointer"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsScannerOpen(true)}
+              className="px-4.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white rounded-xl flex items-center justify-center transition shadow-sm cursor-pointer border border-[#064E3B]/10 active:scale-[0.98]"
+              title="I-scan ang Barcode ng Produkto"
+            >
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 5H5V19H3V5ZM7 5H8V19H7V5ZM10 5H12V19H10V5ZM14 5H15V19H15V5ZM17 5H18V19H17V5ZM20 5H21V19H20V5Z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2 12H22"
+                  stroke="#F97316"
+                  strokeWidth="2.5"
+                  className="animate-pulse"
+                />
+              </svg>
+            </button>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
             {categories.map((cat) => (
@@ -1248,7 +1312,7 @@ export const CashierPOS = ({ embedded = false }) => {
       )}
 
       {/* Modal: Add Product */}
-      {isAddModalOpen && (
+      {isAddModalOpen && userRole !== "staff" && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-[#57534E]/10">
             <div className="flex justify-between items-center mb-6">
@@ -1405,6 +1469,19 @@ export const CashierPOS = ({ embedded = false }) => {
           </div>
         </div>
       )}
+
+      {/* Modal: Barcode Scanner */}
+      {isScannerOpen && (
+        <BarcodeScannerModal
+          products={products}
+          addToCart={addToCart}
+          playBeep={playBeep}
+          showNotification={showNotification}
+          continuousScan={continuousScan}
+          setContinuousScan={setContinuousScan}
+          onClose={() => setIsScannerOpen(false)}
+        />
+      )}
     </>
   );
 
@@ -1417,6 +1494,271 @@ export const CashierPOS = ({ embedded = false }) => {
       <Navbar />
       <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-8">
         {posBody}
+      </div>
+    </div>
+  );
+};
+
+const BarcodeScannerModal = ({
+  products,
+  addToCart,
+  playBeep,
+  showNotification,
+  continuousScan,
+  setContinuousScan,
+  onClose,
+}) => {
+  const [scannerError, setScannerError] = useState("");
+  const [hasCameraPermission, setHasCameraPermission] = useState(true);
+  const [isHttpsOrLocalhost, setIsHttpsOrLocalhost] = useState(true);
+
+  useEffect(() => {
+    // Check HTTPS or localhost
+    const isSecure =
+      window.location.protocol === "https:" ||
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+
+    setIsHttpsOrLocalhost(isSecure);
+
+    const html5QrCode = new Html5Qrcode("barcode-scanner-viewport");
+    let isMounted = true;
+
+    const startScanner = async () => {
+      try {
+        setScannerError("");
+
+        // Wait for element to render in DOM
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        if (!isMounted) return;
+
+        await html5QrCode.start(
+          { facingMode: "environment" }, // back camera on mobile
+          {
+            fps: 15,
+            qrbox: (width, height) => {
+              // Rectangle box layout optimized for linear barcodes
+              const boxWidth = Math.min(width * 0.85, 280);
+              const boxHeight = Math.min(height * 0.35, 100);
+              return {
+                x: (width - boxWidth) / 2,
+                y: (height - boxHeight) / 2,
+                width: boxWidth,
+                height: boxHeight,
+              };
+            },
+            aspectRatio: 1.333333,
+          },
+          (decodedText) => {
+            // Handle Success
+            playBeep();
+
+            // Look up product
+            const matched = products.find(
+              (p) =>
+                p.barcode_sku?.trim().toLowerCase() ===
+                decodedText.trim().toLowerCase(),
+            );
+
+            if (matched) {
+              addToCart(matched);
+              showNotification(
+                `Nahanap at naidagdag sa cart: ${matched.name}`,
+                "success",
+              );
+              if (!continuousScan) {
+                onClose();
+              }
+            } else {
+              showNotification(
+                `Walang produkto para sa barcode: "${decodedText}"`,
+                "error",
+              );
+            }
+          },
+          (errorMessage) => {
+            // Frame analysis fail (silent)
+          },
+        );
+      } catch (err) {
+        console.error("Camera scan start error:", err);
+        if (
+          err.name === "NotAllowedError" ||
+          err.message?.includes("Permission")
+        ) {
+          setHasCameraPermission(false);
+        } else {
+          setScannerError(
+            err.message ||
+              "Hindi masimulan ang camera. Pakisuri kung may iba pang gumagamit nito.",
+          );
+        }
+      }
+    };
+
+    startScanner();
+
+    return () => {
+      isMounted = false;
+      if (html5QrCode.isScanning) {
+        html5QrCode
+          .stop()
+          .catch((err) => console.error("Scanner clean stop error:", err));
+      }
+    };
+  }, [products, continuousScan]);
+
+  return (
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
+      <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl border border-stone-200">
+        {/* Header */}
+        <div className="p-5 border-b border-stone-100 flex items-center justify-between bg-stone-50">
+          <div>
+            <h3 className="font-extrabold text-[#064E3B] text-sm uppercase tracking-wider">
+              Barcode Camera Scanner
+            </h3>
+            <p className="text-[10px] text-stone-500 mt-0.5">
+              Itapat ang pulang linya sa barcode ng produkto
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-stone-400 hover:text-stone-600 transition p-1 font-bold text-sm cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Viewport Area */}
+        <div className="relative bg-black aspect-square w-full flex items-center justify-center overflow-hidden">
+          {/* html5-qrcode target viewport */}
+          <div id="barcode-scanner-viewport" className="w-full h-full"></div>
+
+          {/* Scanner boundary overlay helper (CSS Target Box) */}
+          {hasCameraPermission && isHttpsOrLocalhost && !scannerError && (
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              {/* Outer darkened overlay */}
+              <div className="absolute inset-0 bg-black/40"></div>
+
+              {/* Clear target viewport window */}
+              <div className="relative w-[280px] h-[100px] border-2 border-dashed border-[#064E3B] bg-transparent rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.4)] flex items-center justify-center">
+                {/* Glowing red scanner beam line */}
+                <div className="absolute left-0 right-0 h-0.5 bg-rose-500 shadow-[0_0_8px_#f43f5e] animate-bounce"></div>
+
+                {/* Corner styling to highlight viewport boundaries */}
+                <div className="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-4 border-l-4 border-emerald-500 rounded-tl-sm"></div>
+                <div className="absolute -top-1 -right-1 w-3.5 h-3.5 border-t-4 border-r-4 border-emerald-500 rounded-tr-sm"></div>
+                <div className="absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-4 border-l-4 border-emerald-500 rounded-bl-sm"></div>
+                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-4 border-r-4 border-emerald-500 rounded-br-sm"></div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Message overlays */}
+          {!isHttpsOrLocalhost && (
+            <div className="absolute inset-0 bg-stone-900/95 p-6 flex flex-col items-center justify-center text-center text-white">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-10 w-10 text-amber-500 mb-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 15v2m0-8v6m0 5h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                Secure Origin Required
+              </h4>
+              <p className="text-[11px] text-stone-300 mt-2 max-w-[240px] leading-relaxed">
+                Ang camera access sa mobile ay pinapayagan lamang sa secure
+                connections (**HTTPS**).
+              </p>
+              <p className="text-[10px] text-stone-400 mt-3.5 bg-stone-950 p-2.5 rounded-lg border border-stone-800">
+                Pansamantalang gamitin ang input search o ilipat ang site sa
+                isang HTTPS tunnel (tulad ng ngrok) para gumana sa mobile.
+              </p>
+            </div>
+          )}
+
+          {isHttpsOrLocalhost && !hasCameraPermission && (
+            <div className="absolute inset-0 bg-stone-900/95 p-6 flex flex-col items-center justify-center text-center text-white">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-10 w-10 text-rose-500 mb-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-rose-400">
+                Blocked Camera
+              </h4>
+              <p className="text-[11px] text-stone-300 mt-2 max-w-[240px] leading-relaxed">
+                Tinanggihan ang pahintulot sa camera. Mangyaring bigyan ang
+                browser ng access sa camera sa inyong settings.
+              </p>
+            </div>
+          )}
+
+          {isHttpsOrLocalhost && hasCameraPermission && scannerError && (
+            <div className="absolute inset-0 bg-stone-900/95 p-6 flex flex-col items-center justify-center text-center text-white">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-10 w-10 text-amber-500 mb-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                Scanner Error
+              </h4>
+              <p className="text-[11px] text-stone-300 mt-2 leading-relaxed">
+                {scannerError}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Controls / Options footer */}
+        <div className="p-5 bg-stone-50 border-t border-stone-100 flex flex-col gap-3">
+          <label className="flex items-center justify-between cursor-pointer py-1.5 px-3 bg-white rounded-xl border border-stone-200 shadow-sm active:scale-[0.99] transition">
+            <span className="text-xs font-bold text-stone-600">
+              Continuous Mode (Multi-scan)
+            </span>
+            <input
+              type="checkbox"
+              checked={continuousScan}
+              onChange={(e) => setContinuousScan(e.target.checked)}
+              className="w-4 h-4 rounded text-[#064E3B] focus:ring-[#064E3B]/20 cursor-pointer"
+            />
+          </label>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-2.5 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-xl text-xs font-bold transition cursor-pointer text-center"
+          >
+            Isara
+          </button>
+        </div>
       </div>
     </div>
   );

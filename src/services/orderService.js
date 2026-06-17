@@ -38,9 +38,9 @@ export const placeOrder = async (orderData) => {
         throw new Error("Each order item must have a product ID.");
       }
       const productDocRef = doc(db, "products", item.id);
-      // Babawasan ang 'stock' field base sa quantity ng binili
+      // Babawasan ang 'stock_quantity' field base sa quantity ng binili
       batch.update(productDocRef, {
-        stock: increment(-item.quantity),
+        stock_quantity: increment(-item.quantity),
       });
     });
 

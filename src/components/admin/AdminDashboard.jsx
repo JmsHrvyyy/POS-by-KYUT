@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "../shared/Navbar";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { db } from "../../config/firebase";
 import {
@@ -15,6 +16,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { getProductsByStore, addProduct } from "../../services/productService";
+import { getOrdersByStore } from "../../services/orderService";
 import {
   ResponsiveContainer,
   LineChart,
@@ -55,7 +57,15 @@ const MOCK_STAFF = [
 const isMockStore = (id) => id?.startsWith("store_00");
 
 export const AdminDashboard = () => {
-  const { activeStoreId, activeStoreName } = useAuth();
+  const navigate = useNavigate();
+  const { activeStoreId, activeStoreName, userRole } = useAuth();
+
+  // Role authorization redirect: Staff is not allowed to access the admin dashboard
+  useEffect(() => {
+    if (userRole === "staff") {
+      navigate("/cashier/pos", { replace: true });
+    }
+  }, [userRole, navigate]);
 
   // ── Tab Navigation ────────────────────────────────────────────
   // Tatlo na ang pagpipilian ngayon: "inventory", "products", o "staff"
@@ -64,6 +74,8 @@ export const AdminDashboard = () => {
   // ── Inventory & Products State ────────────────────────────────
   const [products, setProducts] = useState([]);
   const [loadingProds, setLoadingProds] = useState(true);
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
   const [isAddProdOpen, setIsAddProdOpen] = useState(false);
   const [prodError, setProdError] = useState("");
   const [prodSuccess, setProdSuccess] = useState("");
@@ -128,6 +140,29 @@ export const AdminDashboard = () => {
     }
   };
 
+  const fetchOrders = async () => {
+    if (!activeStoreId) {
+      setOrders([]);
+      setLoadingOrders(false);
+      return;
+    }
+    if (isMockStore(activeStoreId)) {
+      setOrders([]);
+      setLoadingOrders(false);
+      return;
+    }
+    try {
+      setLoadingOrders(true);
+      const data = await getOrdersByStore(activeStoreId);
+      setOrders(data);
+    } catch (err) {
+      console.error("fetchOrders:", err);
+      showToast("Hindi maikarga ang mga orders.", "error");
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
   const [storeName, setStoreName] = useState("Ikinakarga...");
 
   useEffect(() => {
@@ -161,6 +196,7 @@ export const AdminDashboard = () => {
 
   useEffect(() => {
     fetchProducts();
+    fetchOrders();
   }, [activeStoreId]);
 
   // Awtomatikong kalkulahin ang unique categories para sa datalist dropdown
@@ -664,7 +700,12 @@ export const AdminDashboard = () => {
           )}
         </header>
 
-        <AnalyticsSection />
+        <AnalyticsSection
+          products={products}
+          orders={orders}
+          isMock={isMockStore(activeStoreId)}
+          loading={loadingProds || loadingOrders}
+        />
 
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -1530,7 +1571,159 @@ const MOCK_STOCK_DISTRIBUTION = [
   { name: "Coffee", value: 10 },
 ];
 
-const AnalyticsSection = () => {
+const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading = false }) => {
+  // 1. Loading state with premium shimmer animation
+  if (loading) {
+    return (
+      <div className="space-y-6 my-6 animate-pulse">
+        {/* Large chart skeleton */}
+        <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm h-80 flex flex-col justify-between">
+          <div className="space-y-2">
+            <div className="h-4 bg-stone-200 rounded w-1/4"></div>
+            <div className="h-3 bg-stone-100 rounded w-1/3"></div>
+          </div>
+          <div className="h-48 bg-stone-50 rounded-xl w-full flex items-center justify-center">
+            <span className="text-xs text-stone-400 font-semibold animate-pulse">Inihahanda ang ulat ng benta...</span>
+          </div>
+        </div>
+        {/* Two smaller charts skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm h-72 flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="h-4 bg-stone-200 rounded w-1/3"></div>
+              <div className="h-3 bg-stone-100 rounded w-1/2"></div>
+            </div>
+            <div className="h-40 bg-stone-50 rounded-xl w-full flex items-center justify-center">
+              <span className="text-xs text-stone-400 font-semibold">Inilalagay ang mga produkto...</span>
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm h-72 flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="h-4 bg-stone-200 rounded w-1/3"></div>
+              <div className="h-3 bg-stone-100 rounded w-1/2"></div>
+            </div>
+            <div className="h-40 bg-stone-50 rounded-xl w-full flex items-center justify-center">
+              <span className="text-xs text-stone-400 font-semibold">Kinakalkula ang imbentaryo...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Helper function to extract date
+  const getOrderDate = (order) => {
+    if (order.created_at?.toDate) {
+      return order.created_at.toDate();
+    }
+    if (order.created_at) {
+      return new Date(order.created_at);
+    }
+    return null;
+  };
+
+  // Determine which data to use (mock fallback if isMock or database is completely empty)
+  const isDatabaseEmpty = products.length === 0 && orders.length === 0;
+  const useMock = isMock || isDatabaseEmpty;
+
+  // 2. Data Calculation
+  let salesData = MOCK_SALES_DATA;
+  let topProducts = MOCK_TOP_PRODUCTS;
+  let stockDistribution = MOCK_STOCK_DISTRIBUTION;
+
+  if (!useMock) {
+    // ── A. Compute Sales Performance (Last 7 Days ending today) ──
+    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      last7Days.push({
+        date: daysOfWeek[d.getDay()],
+        dateStr: d.toDateString(),
+        benta: 0,
+      });
+    }
+
+    orders.forEach((order) => {
+      const oDate = getOrderDate(order);
+      if (!oDate) return;
+      const oDateStr = oDate.toDateString();
+      const matchedDay = last7Days.find((day) => day.dateStr === oDateStr);
+      if (matchedDay) {
+        matchedDay.benta += Number(order.total) || 0;
+      }
+    });
+    salesData = last7Days.map(({ date, benta }) => ({ date, benta }));
+
+    // ── B. Compute Top Products (by aggregated sold quantity) ──
+    const productSoldCounts = {};
+    orders.forEach((order) => {
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach((item) => {
+          const name = item.name || "Unknown Product";
+          const qty = Number(item.quantity) || 0;
+          productSoldCounts[name] = (productSoldCounts[name] || 0) + qty;
+        });
+      }
+    });
+
+    const sortedProducts = Object.keys(productSoldCounts).map((name) => ({
+      name,
+      sold: productSoldCounts[name],
+    }));
+    sortedProducts.sort((a, b) => b.sold - a.sold);
+    topProducts = sortedProducts.slice(0, 5);
+
+    // ── C. Compute Stock Distribution by Category (percentages) ──
+    const categoryStockSums = {};
+    let totalStock = 0;
+    products.forEach((p) => {
+      const cat = p.category || "Iba pa";
+      const stockVal = Number(p.stock_quantity) || 0;
+      categoryStockSums[cat] = (categoryStockSums[cat] || 0) + stockVal;
+      totalStock += stockVal;
+    });
+
+    let distributionArr = Object.keys(categoryStockSums).map((cat) => ({
+      name: cat,
+      value: categoryStockSums[cat],
+    }));
+
+    // If all stocks are 0, group by product counts instead so chart isn't empty
+    if (totalStock === 0 && products.length > 0) {
+      const categoryCounts = {};
+      products.forEach((p) => {
+        const cat = p.category || "Iba pa";
+        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+      });
+      distributionArr = Object.keys(categoryCounts).map((cat) => ({
+        name: cat,
+        value: categoryCounts[cat],
+      }));
+    }
+
+    distributionArr.sort((a, b) => b.value - a.value);
+
+    // Keep top 4 and bundle the rest to 'Iba pa'
+    if (distributionArr.length > 5) {
+      const top4 = distributionArr.slice(0, 4);
+      const rest = distributionArr.slice(4);
+      const restSum = rest.reduce((sum, item) => sum + item.value, 0);
+      top4.push({ name: "Iba pa", value: restSum });
+      distributionArr = top4;
+    }
+
+    // Convert values to percentage ratios
+    const sumVal = distributionArr.reduce((sum, item) => sum + item.value, 0);
+    stockDistribution = distributionArr
+      .map((item) => ({
+        name: item.name,
+        value: sumVal > 0 ? Math.round((item.value / sumVal) * 100) : 0,
+      }))
+      .filter((item) => item.value > 0);
+  }
+
   return (
     <div className="space-y-6 my-6">
       {/* CARD 1: Sales Analytics */}
@@ -1541,46 +1734,58 @@ const AnalyticsSection = () => {
               Ulat ng Benta (Sales Performance)
             </h3>
             <p className="text-xs text-[#57534E]">
-              Visual na takbo ng kabuuang kita ngayong linggo
+              {useMock
+                ? "Visual na takbo ng kabuuang kita ngayong linggo (Demo Data)"
+                : "Visual na takbo ng kabuuang kita ngayong linggo (Live Data)"}
             </p>
           </div>
-          <span className="text-[10px] font-bold text-[#064E3B] bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-xl uppercase tracking-wider">
-            Live
+          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-xl uppercase tracking-wider ${
+            useMock 
+              ? "text-[#F97316] bg-amber-50 border border-amber-200"
+              : "text-[#064E3B] bg-emerald-50 border border-emerald-200"
+          }`}>
+            {useMock ? "Demo" : "Live"}
           </span>
         </div>
         <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={MOCK_SALES_DATA}
-              margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F4" />
-              <XAxis
-                dataKey="date"
-                stroke="#57534E"
-                fontSize={11}
-                tickLine={false}
-              />
-              <YAxis stroke="#57534E" fontSize={11} tickLine={false} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0C0A09",
-                  borderRadius: "12px",
-                  border: "none",
-                }}
-                labelStyle={{ color: "#FFF", fontWeight: "bold" }}
-                itemStyle={{ color: "#A7F3D0" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="benta"
-                name="Kita (₱)"
-                stroke="#064E3B"
-                strokeWidth={3}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          {salesData.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-xs text-[#57534E]">
+              Walang data ng benta sa kasalukuyan.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={salesData}
+                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#F5F5F4" />
+                <XAxis
+                  dataKey="date"
+                  stroke="#57534E"
+                  fontSize={11}
+                  tickLine={false}
+                />
+                <YAxis stroke="#57534E" fontSize={11} tickLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#0C0A09",
+                    borderRadius: "12px",
+                    border: "none",
+                  }}
+                  labelStyle={{ color: "#FFF", fontWeight: "bold" }}
+                  itemStyle={{ color: "#A7F3D0" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="benta"
+                  name="Kita (₱)"
+                  stroke="#064E3B"
+                  strokeWidth={3}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
 
@@ -1597,48 +1802,54 @@ const AnalyticsSection = () => {
             </p>
           </div>
           <div className="h-56 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={MOCK_TOP_PRODUCTS}
-                layout="vertical"
-                margin={{ top: 0, right: 10, left: 10, bottom: 0 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#F5F5F4"
-                  horizontal={false}
-                />
-                <XAxis
-                  type="number"
-                  stroke="#57534E"
-                  fontSize={11}
-                  tickLine={false}
-                />
-                <YAxis
-                  dataKey="name"
-                  type="category"
-                  stroke="#57534E"
-                  fontSize={10}
-                  tickLine={false}
-                  width={85}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#0C0A09",
-                    borderRadius: "12px",
-                    border: "none",
-                  }}
-                  itemStyle={{ color: "#fff" }}
-                />
-                <Bar
-                  dataKey="sold"
-                  name="Naibenta"
-                  fill="#047857"
-                  radius={[0, 6, 6, 0]}
-                  barSize={14}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            {topProducts.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-xs text-[#57534E]">
+                Walang bentang produkto sa kasalukuyan.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={topProducts}
+                  layout="vertical"
+                  margin={{ top: 0, right: 10, left: 10, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#F5F5F4"
+                    horizontal={false}
+                  />
+                  <XAxis
+                    type="number"
+                    stroke="#57534E"
+                    fontSize={11}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    stroke="#57534E"
+                    fontSize={10}
+                    tickLine={false}
+                    width={85}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#0C0A09",
+                      borderRadius: "12px",
+                      border: "none",
+                    }}
+                    itemStyle={{ color: "#fff" }}
+                  />
+                  <Bar
+                    dataKey="sold"
+                    name="Naibenta"
+                    fill="#047857"
+                    radius={[0, 6, 6, 0]}
+                    barSize={14}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -1653,57 +1864,65 @@ const AnalyticsSection = () => {
             </p>
           </div>
           <div className="h-56 w-full flex flex-col sm:flex-row items-center justify-center gap-2">
-            <div className="w-1/2 h-full min-h-[140px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={MOCK_STOCK_DISTRIBUTION}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={65}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {MOCK_STOCK_DISTRIBUTION.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
+            {stockDistribution.length === 0 ? (
+              <div className="h-full w-full flex items-center justify-center text-xs text-[#57534E]">
+                Walang mga kategorya o imbentaryo.
+              </div>
+            ) : (
+              <>
+                <div className="w-1/2 h-full min-h-[140px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={stockDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={65}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {stockDistribution.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#0C0A09",
+                          borderRadius: "12px",
+                          border: "none",
+                        }}
+                        itemStyle={{ color: "#fff" }}
                       />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#0C0A09",
-                      borderRadius: "12px",
-                      border: "none",
-                    }}
-                    itemStyle={{ color: "#fff" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex flex-col gap-1 w-full sm:w-1/2 px-2">
-              {MOCK_STOCK_DISTRIBUTION.map((entry, index) => (
-                <div
-                  key={entry.name}
-                  className="flex items-center justify-between text-[11px]"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="w-2.5 h-2.5 rounded-md flex-shrink-0"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    />
-                    <span className="font-bold text-[#57534E]">
-                      {entry.name}
-                    </span>
-                  </div>
-                  <span className="font-mono font-extrabold text-[#0C0A09]">
-                    {entry.value}%
-                  </span>
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-            </div>
+                <div className="flex flex-col gap-1 w-full sm:w-1/2 px-2">
+                  {stockDistribution.map((entry, index) => (
+                    <div
+                      key={entry.name}
+                      className="flex items-center justify-between text-[11px]"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="w-2.5 h-2.5 rounded-md flex-shrink-0"
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
+                        <span className="font-bold text-[#57534E] truncate max-w-[80px]">
+                          {entry.name}
+                        </span>
+                      </div>
+                      <span className="font-mono font-extrabold text-[#0C0A09]">
+                        {entry.value}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
