@@ -69,7 +69,8 @@ export const AdminDashboard = () => {
 
   // ── Tab Navigation ────────────────────────────────────────────
   // Tatlo na ang pagpipilian ngayon: "inventory", "products", o "staff"
-  const [activeTab, setActiveTab] = useState("inventory");
+  const [mainTab, setMainTab] = useState("inventory");
+  const [subTab, setSubTab] = useState("inventory");
 
   // ── Inventory & Products State ────────────────────────────────
   const [products, setProducts] = useState([]);
