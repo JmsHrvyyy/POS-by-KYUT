@@ -802,8 +802,7 @@ export const AdminDashboard = () => {
         )}
 
         {mainTab === "inventory" && (
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {stats.map((stat, i) => (
             <div
               key={i}
