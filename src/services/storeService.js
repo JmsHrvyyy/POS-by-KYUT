@@ -123,3 +123,26 @@ export const createStore = async (storeData, ownerId) => {
   }
 };
 
+/**
+ * Updates an existing store in the 'stores' collection.
+ * 
+ * @param {string} storeId - The store ID to update.
+ * @param {Object} updatedFields - The fields to update.
+ * @returns {Promise<void>}
+ */
+export const updateStore = async (storeId, updatedFields) => {
+  if (!storeId) {
+    throw new Error("Store ID is required to update a store.");
+  }
+  try {
+    const storeDocRef = doc(db, "stores", storeId);
+    await updateDoc(storeDocRef, {
+      ...updatedFields,
+      updated_at: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Error updating store details:", error);
+    throw error;
+  }
+};
+

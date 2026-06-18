@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 import { getProductsByStore, addProduct } from "../../services/productService";
 import { getOrdersByStore } from "../../services/orderService";
+import { updateStore } from "../../services/storeService";
 import {
   ResponsiveContainer,
   LineChart,
@@ -68,7 +69,10 @@ export const AdminDashboard = () => {
   }, [userRole, navigate]);
 
   // ── Tab Navigation ────────────────────────────────────────────
-  // Tatlo na ang pagpipilian ngayon: "inventory", "products", o "staff"
+  // Main tabs: "inventory", "analytics", "settings"
+  const [activeMainTab, setActiveMainTab] = useState("inventory");
+
+  // Inventory Sub-Tabs: "inventory" (view), "products" (manage), "staff" (staff)
   const [activeTab, setActiveTab] = useState("inventory");
 
   // ── Inventory & Products State ────────────────────────────────
@@ -163,35 +167,72 @@ export const AdminDashboard = () => {
     }
   };
 
-  const [storeName, setStoreName] = useState("Ikinakarga...");
+  const [storeDetails, setStoreDetails] = useState({
+    name: "Ikinakarga...",
+    industry_type: "Retail",
+    address: "",
+    contact: "",
+    currency: "₱",
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
-    const fetchStoreName = async () => {
+    const fetchStoreDetails = async () => {
       if (!activeStoreId) {
-        setStoreName("Walang Aktibong Tindahan");
+        setStoreDetails({
+          name: "Walang Aktibong Tindahan",
+          industry_type: "Retail",
+          address: "",
+          contact: "",
+          currency: "₱",
+        });
         return;
       }
       if (isMockStore(activeStoreId)) {
-        setStoreName("Demo Branch Store");
+        setStoreDetails({
+          name: "Demo Branch Store",
+          industry_type: "Retail",
+          address: "123 Demo St, Manila",
+          contact: "demo@store.com",
+          currency: "₱",
+        });
         return;
       }
       try {
-        // Hihilahin ang dokumento ng tindahan mula sa 'stores' collection
         const storeDocRef = doc(db, "stores", activeStoreId);
         const storeDocSnap = await getDoc(storeDocRef);
 
-        if (storeDocSnap.exists() && storeDocSnap.data().name) {
-          setStoreName(storeDocSnap.data().name); // Dito natin nakuha ang totoong name!
+        if (storeDocSnap.exists()) {
+          const data = storeDocSnap.data();
+          setStoreDetails({
+            name: data.name || "Tindahan (Walang Pangalan)",
+            industry_type: data.industry_type || "Retail",
+            address: data.address || "",
+            contact: data.contact || "",
+            currency: data.currency || "₱",
+          });
         } else {
-          setStoreName("Tindahan (Walang Pangalan)");
+          setStoreDetails({
+            name: "Tindahan (Walang Pangalan)",
+            industry_type: "Retail",
+            address: "",
+            contact: "",
+            currency: "₱",
+          });
         }
       } catch (err) {
-        console.error("Error fetching store name:", err);
-        setStoreName("Error sa Pag-load");
+        console.error("Error fetching store details:", err);
+        setStoreDetails({
+          name: "Error sa Pag-load",
+          industry_type: "Retail",
+          address: "",
+          contact: "",
+          currency: "₱",
+        });
       }
     };
 
-    fetchStoreName();
+    fetchStoreDetails();
   }, [activeStoreId]);
 
   useEffect(() => {
@@ -607,11 +648,100 @@ export const AdminDashboard = () => {
     // Stats Card Configuration
     {
       name: "Pangalan ng Tindahan",
-      value: storeName, // Ipapakita ang totoong pangalan ng branch o tindahan
+      value: storeDetails.name, // Ipapakita ang totoong pangalan ng branch o tindahan
       sub: isMockStore(activeStoreId)
         ? "Demo Mode"
         : `ID: ${activeStoreId?.slice(0, 6)}...`, // Itatago ang mahabang ID sa maliit na subtext sa ilalim
       colorClass: "text-[#064E3B] bg-[#064E3B]/10",
+    },
+  ];
+
+  const handleUpdateStoreSettings = async (e) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      if (isMockStore(activeStoreId)) {
+        showToast("Matagumpay na na-update ang store settings (Demo Mode)!");
+      } else {
+        await updateStore(activeStoreId, {
+          name: storeDetails.name,
+          industry_type: storeDetails.industry_type,
+          address: storeDetails.address,
+          contact: storeDetails.contact || "",
+          currency: storeDetails.currency || "₱",
+        });
+        showToast("Matagumpay na na-save ang mga pagbabago sa tindahan!");
+      }
+    } catch (err) {
+      console.error("Error updating store settings:", err);
+      showToast("Hindi ma-save ang settings ng tindahan.", "error");
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const mainTabs = [
+    {
+      key: "inventory",
+      label: "Inventory / Staff",
+      icon: (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+          />
+        </svg>
+      ),
+    },
+    {
+      key: "analytics",
+      label: "Analytics",
+      icon: (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+      ),
+    },
+    {
+      key: "settings",
+      label: "Settings",
+      icon: (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+      ),
     },
   ];
 
@@ -694,292 +824,459 @@ export const AdminDashboard = () => {
           {activeStoreId && (
             <div className="flex items-center gap-2 bg-[#064E3B]/10 text-[#064E3B] border border-[#064E3B]/20 px-4 py-2.5 rounded-xl text-xs font-sans font-bold self-start">
               <span className="w-1.5 h-1.5 rounded-full bg-[#064E3B] animate-ping" />
-              {storeName}{" "}
-              {/* Ito na ang gagamit ng totoong pangalan ng store */}
+              {storeDetails.name}{" "}
             </div>
           )}
         </header>
 
-        <AnalyticsSection
-          products={products}
-          orders={orders}
-          isMock={isMockStore(activeStoreId)}
-          loading={loadingProds || loadingOrders}
-        />
-
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {stats.map((stat, i) => (
-            <div
-              key={i}
-              className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm"
+        {/* Main Tab Level Navigation */}
+        <div className="flex border-b border-[#57534E]/10 bg-[#FAFAF9]/60 px-4 pt-3 gap-1 mb-8 overflow-x-auto">
+          {mainTabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveMainTab(tab.key)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all border-b-2 -mb-px cursor-pointer ${
+                activeMainTab === tab.key
+                  ? "border-[#064E3B] text-[#064E3B] bg-white"
+                  : "border-transparent text-[#57534E]/70 hover:text-[#57534E]"
+              }`}
             >
-              <p className="text-xs font-bold uppercase tracking-wider text-[#57534E]">
-                {stat.name}
-              </p>
-              <h3 className="text-2xl font-extrabold text-[#0C0A09] mt-1">
-                {stat.value}
-              </h3>
-              <span
-                className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full mt-2 ${stat.colorClass}`}
-              >
-                {stat.sub}
-              </span>
-            </div>
+              {tab.icon}
+              {tab.label}
+            </button>
           ))}
         </div>
 
-        {/* Dynamic Control Panel Grid */}
-        <div className="bg-white rounded-2xl border border-[#57534E]/15 shadow-sm overflow-hidden">
-          {/* Tabs Control Line */}
-          <div className="flex border-b border-[#57534E]/10 bg-[#FAFAF9]/60 px-4 pt-3 gap-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all border-b-2 -mb-px cursor-pointer ${
-                  activeTab === tab.key
-                    ? "border-[#064E3B] text-[#064E3B] bg-white"
-                    : "border-transparent text-[#57534E]/70 hover:text-[#57534E]"
-                }`}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* VIEW TAB: Inventory Preview List */}
-          {activeTab === "inventory" && (
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-[#064E3B]">
-                    Imbentaryo View
-                  </h3>
-                  <p className="text-xs text-[#57534E]">
-                    Monitor ng kasalukuyang bilang ng paninda.
-                  </p>
-                </div>
-                {activeStoreId && (
-                  <button
-                    onClick={() => setIsAddProdOpen(true)}
-                    className="px-3.5 py-2 bg-[#064E3B] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
-                  >
-                    + Bagong Produkto
-                  </button>
-                )}
-              </div>
-
-              {loadingProds ? (
-                <div className="text-center py-10 text-xs">Ikinakarga...</div>
-              ) : products.length === 0 ? (
-                <div className="text-center py-12 text-xs text-[#57534E]">
-                  Walang produkto.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-[#57534E]/10 text-[#57534E] uppercase text-[10px]">
-                        <th className="pb-3">Pangalan</th>
-                        <th className="pb-3">Kategorya</th>
-                        <th className="pb-3">Presyo</th>
-                        <th className="pb-3 text-right">Dami ng Stock</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#57534E]/5">
-                      {products.map((p) => (
-                        <tr key={p.id} className="hover:bg-[#FAFAF9]/50">
-                          <td className="py-3.5 font-bold">{p.name}</td>
-                          <td className="py-3.5 text-[#57534E]">
-                            {p.category}
-                          </td>
-                          <td className="py-3.5 text-[#064E3B] font-extrabold">
-                            ₱{p.selling_price?.toFixed(2)}
-                          </td>
-                          <td className="py-3.5 text-right font-bold">
-                            {p.stock_quantity} units
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── BAGONG TAB VIEW: PRODUCTS MANAGEMENT ACTIONS (RESTOCK / EDIT / REMOVE) ── */}
-          {activeTab === "products" && (
-            <div className="p-6">
-              <div>
-                <h3 className="text-lg font-bold text-[#064E3B]">
-                  Pamamahala at Pag-update
-                </h3>
-                <p className="text-xs text-[#57534E] mb-6">
-                  Dito ka magre-restock, mag-e-edit ng detalye, o magbubura ng
-                  aytem.
-                </p>
-              </div>
-
-              {loadingProds ? (
-                <div className="text-center py-10 text-xs">Ikinakarga...</div>
-              ) : products.length === 0 ? (
-                <div className="text-center py-12 text-xs text-[#57534E]">
-                  Walang produkto na pwedeng i-modify.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-[#57534E]/10 text-[#57534E] uppercase text-[10px] tracking-wider">
-                        <th className="pb-3 font-bold">Produkto</th>
-                        <th className="pb-3 font-bold">Puhunan / Benta</th>
-                        <th className="pb-3 font-bold">Kasalukuyang Stock</th>
-                        <th className="pb-3 font-bold text-center">
-                          Mga Aksyon
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#57534E]/5">
-                      {products.map((p) => (
-                        <tr key={p.id} className="hover:bg-[#FAFAF9]/40">
-                          <td className="py-4">
-                            <p className="font-bold text-[#0C0A09]">{p.name}</p>
-                            <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded font-mono">
-                              {p.barcode_sku}
-                            </span>
-                          </td>
-                          <td className="py-4">
-                            <span className="text-stone-500">
-                              P: ₱{p.cost_price?.toFixed(2)}
-                            </span>
-                            <p className="text-[#064E3B] font-bold">
-                              B: ₱{p.selling_price?.toFixed(2)}
-                            </p>
-                          </td>
-                          <td className="py-4 font-mono font-bold">
-                            {p.stock_quantity <= 10 ? (
-                              <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded-md text-[11px]">
-                                Mababa ({p.stock_quantity})
-                              </span>
-                            ) : (
-                              <span className="text-[#57534E]">
-                                {p.stock_quantity} units
-                              </span>
-                            )}
-                          </td>
-                          {/* Dito nakapaloob ang hiningi mong dynamic features (Restock, Edit, at Remove) */}
-                          <td className="py-4 text-center">
-                            <div className="inline-flex gap-2">
-                              {/* 1. Restock Trigger */}
-                              <button
-                                onClick={() => {
-                                  setSelectedProduct(p);
-                                  setIsRestockOpen(true);
-                                }}
-                                className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#064E3B] font-bold rounded-lg text-[11px] transition cursor-pointer"
-                              >
-                                Restock
-                              </button>
-                              {/* 2. Edit Details Trigger */}
-                              <button
-                                onClick={() => {
-                                  setSelectedProduct(p);
-                                  setIsEditOpen(true);
-                                }}
-                                className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold rounded-lg text-[11px] transition cursor-pointer"
-                              >
-                                Edit
-                              </button>
-                              {/* 3. Remove Button */}
-                              <button
-                                onClick={() => handleDeleteProduct(p)}
-                                className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-[11px] transition cursor-pointer"
-                              >
-                                Burahin
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* STAFF TAB VIEW */}
-          {activeTab === "staff" && (
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-[#064E3B]">
-                    Mga Staff
-                  </h3>
-                  <p className="text-xs text-[#57534E]">
-                    Cashiers na pwedeng pumasok sa branch na ito.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsAddStaffOpen(true)}
-                  className="px-3.5 py-2 bg-[#064E3B] text-white font-bold rounded-xl text-xs cursor-pointer"
+        {/* 1. Inventory Main Tab */}
+        {activeMainTab === "inventory" && (
+          <>
+            {/* Stats Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {stats.map((stat, i) => (
+                <div
+                  key={i}
+                  className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm"
                 >
-                  + Bagong Staff
-                </button>
-              </div>
-              {/* Staff Table Layout */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-[#57534E]/10 text-[#57534E] uppercase text-[10px]">
-                      <th className="pb-3">Pangalan</th>
-                      <th className="pb-3">Role</th>
-                      <th className="pb-3">Email</th>
-                      <th className="pb-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#57534E]/5">
-                    {staffList.map((s, i) => (
-                      <tr key={i}>
-                        <td className="py-3.5 font-bold">{s.name}</td>
-                        <td className="py-3.5 text-[#57534E] font-medium">
-                          <select
-                            value={s.role}
-                            onChange={(e) =>
-                              handleUpdateStaffRole(s, e.target.value)
-                            }
-                            className="bg-stone-50 border border-stone-200 rounded px-2 py-1 text-xs font-semibold focus:outline-none focus:border-[#064E3B] cursor-pointer"
-                          >
-                            <option value="Cashier">Cashier</option>
-                            <option value="Head Cashier">Head Cashier</option>
-                            <option value="Admin">Admin</option>
-                          </select>
-                        </td>
-                        <td className="py-3.5 text-[#57534E] font-mono">
-                          {s.email}
-                        </td>
-                        <td className="py-3.5">
-                          <span
-                            className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              s.status === "Active"
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-amber-100 text-amber-800"
-                            }`}
-                          >
-                            {s.status || "Active"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#57534E]">
+                    {stat.name}
+                  </p>
+                  <h3 className="text-2xl font-extrabold text-[#0C0A09] mt-1">
+                    {stat.value}
+                  </h3>
+                  <span
+                    className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full mt-2 ${stat.colorClass}`}
+                  >
+                    {stat.sub}
+                  </span>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
+
+            {/* Dynamic Control Panel Grid */}
+            <div className="bg-white rounded-2xl border border-[#57534E]/15 shadow-sm overflow-hidden">
+              {/* Tabs Control Line */}
+              <div className="flex border-b border-[#57534E]/10 bg-[#FAFAF9]/60 px-4 pt-3 gap-1">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all border-b-2 -mb-px cursor-pointer ${
+                      activeTab === tab.key
+                        ? "border-[#064E3B] text-[#064E3B] bg-white"
+                        : "border-transparent text-[#57534E]/70 hover:text-[#57534E]"
+                    }`}
+                  >
+                    {tab.icon}
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* VIEW TAB: Inventory Preview List */}
+              {activeTab === "inventory" && (
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-[#064E3B]">
+                        Imbentaryo View
+                      </h3>
+                      <p className="text-xs text-[#57534E]">
+                        Monitor ng kasalukuyang bilang ng paninda.
+                      </p>
+                    </div>
+                    {activeStoreId && (
+                      <button
+                        onClick={() => setIsAddProdOpen(true)}
+                        className="px-3.5 py-2 bg-[#064E3B] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
+                      >
+                        + Bagong Produkto
+                      </button>
+                    )}
+                  </div>
+
+                  {loadingProds ? (
+                    <div className="text-center py-10 text-xs">Ikinakarga...</div>
+                  ) : products.length === 0 ? (
+                    <div className="text-center py-12 text-xs text-[#57534E]">
+                      Walang produkto.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-[#57534E]/10 text-[#57534E] uppercase text-[10px]">
+                            <th className="pb-3">Pangalan</th>
+                            <th className="pb-3">Kategorya</th>
+                            <th className="pb-3">Presyo</th>
+                            <th className="pb-3 text-right">Dami ng Stock</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#57534E]/5">
+                          {products.map((p) => (
+                            <tr key={p.id} className="hover:bg-[#FAFAF9]/50">
+                              <td className="py-3.5 font-bold">{p.name}</td>
+                              <td className="py-3.5 text-[#57534E]">
+                                {p.category}
+                              </td>
+                              <td className="py-3.5 text-[#064E3B] font-extrabold">
+                                {storeDetails.currency || "₱"}{p.selling_price?.toFixed(2)}
+                              </td>
+                              <td className="py-3.5 text-right font-bold">
+                                {p.stock_quantity} units
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── BAGONG TAB VIEW: PRODUCTS MANAGEMENT ACTIONS (RESTOCK / EDIT / REMOVE) ── */}
+              {activeTab === "products" && (
+                <div className="p-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-[#064E3B]">
+                      Pamamahala at Pag-update
+                    </h3>
+                    <p className="text-xs text-[#57534E] mb-6">
+                      Dito ka magre-restock, mag-e-edit ng detalye, o magbubura ng aytem.
+                    </p>
+                  </div>
+
+                  {loadingProds ? (
+                    <div className="text-center py-10 text-xs">Ikinakarga...</div>
+                  ) : products.length === 0 ? (
+                    <div className="text-center py-12 text-xs text-[#57534E]">
+                      Walang produkto na pwedeng i-modify.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-[#57534E]/10 text-[#57534E] uppercase text-[10px] tracking-wider">
+                            <th className="pb-3 font-bold">Produkto</th>
+                            <th className="pb-3 font-bold">Puhunan / Benta</th>
+                            <th className="pb-3 font-bold">Kasalukuyang Stock</th>
+                            <th className="pb-3 font-bold text-center">
+                              Mga Aksyon
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[#57534E]/5">
+                          {products.map((p) => (
+                            <tr key={p.id} className="hover:bg-[#FAFAF9]/40">
+                              <td className="py-4">
+                                <p className="font-bold text-[#0C0A09]">{p.name}</p>
+                                <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded font-mono">
+                                  {p.barcode_sku}
+                                </span>
+                              </td>
+                              <td className="py-4">
+                                <span className="text-stone-500">
+                                  P: {storeDetails.currency || "₱"}{p.cost_price?.toFixed(2)}
+                                </span>
+                                <p className="text-[#064E3B] font-bold">
+                                  B: {storeDetails.currency || "₱"}{p.selling_price?.toFixed(2)}
+                                </p>
+                              </td>
+                              <td className="py-4 font-mono font-bold">
+                                {p.stock_quantity <= 10 ? (
+                                  <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded-md text-[11px]">
+                                    Mababa ({p.stock_quantity})
+                                  </span>
+                                ) : (
+                                  <span className="text-[#57534E]">
+                                    {p.stock_quantity} units
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-4 text-center">
+                                <div className="inline-flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedProduct(p);
+                                      setIsRestockOpen(true);
+                                    }}
+                                    className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#064E3B] font-bold rounded-lg text-[11px] transition cursor-pointer"
+                                  >
+                                    Restock
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedProduct(p);
+                                      setIsEditOpen(true);
+                                    }}
+                                    className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold rounded-lg text-[11px] transition cursor-pointer"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteProduct(p)}
+                                    className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-[11px] transition cursor-pointer"
+                                  >
+                                    Burahin
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* STAFF TAB VIEW */}
+              {activeTab === "staff" && (
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-[#064E3B]">
+                        Mga Staff
+                      </h3>
+                      <p className="text-xs text-[#57534E]">
+                        Cashiers na pwedeng pumasok sa branch na ito.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setIsAddStaffOpen(true)}
+                      className="px-3.5 py-2 bg-[#064E3B] text-white font-bold rounded-xl text-xs cursor-pointer"
+                    >
+                      + Bagong Staff
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-[#57534E]/10 text-[#57534E] uppercase text-[10px]">
+                          <th className="pb-3">Pangalan</th>
+                          <th className="pb-3">Role</th>
+                          <th className="pb-3">Email</th>
+                          <th className="pb-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#57534E]/5">
+                        {staffList.map((s, i) => (
+                          <tr key={i}>
+                            <td className="py-3.5 font-bold">{s.name}</td>
+                            <td className="py-3.5 text-[#57534E] font-medium">
+                              <select
+                                value={s.role}
+                                onChange={(e) =>
+                                  handleUpdateStaffRole(s, e.target.value)
+                                }
+                                className="bg-stone-50 border border-stone-200 rounded px-2 py-1 text-xs font-semibold focus:outline-none focus:border-[#064E3B] cursor-pointer"
+                              >
+                                <option value="Cashier">Cashier</option>
+                                <option value="Head Cashier">Head Cashier</option>
+                                <option value="Admin">Admin</option>
+                              </select>
+                            </td>
+                            <td className="py-3.5 text-[#57534E] font-mono">
+                              {s.email}
+                            </td>
+                            <td className="py-3.5">
+                              <span
+                                className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  s.status === "Active"
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : "bg-amber-100 text-amber-800"
+                                }`}
+                              >
+                                {s.status || "Active"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* 2. Analytics Main Tab */}
+        {activeMainTab === "analytics" && (
+          <AnalyticsSection
+            products={products}
+            orders={orders}
+            isMock={isMockStore(activeStoreId)}
+            loading={loadingProds || loadingOrders}
+            currency={storeDetails.currency || "₱"}
+          />
+        )}
+
+        {/* 3. Settings Main Tab */}
+        {activeMainTab === "settings" && (
+          <div className="bg-white rounded-2xl border border-[#57534E]/15 shadow-sm p-6 sm:p-8 max-w-4xl mx-auto animate-fadeIn">
+            <div className="flex flex-col md:flex-row gap-8">
+              {/* Profile Card Side */}
+              <div className="w-full md:w-1/3 bg-gradient-to-br from-[#064E3B] to-[#047857] p-6 rounded-2xl text-white flex flex-col justify-between shadow-md">
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/20">
+                    Store Profile
+                  </span>
+                  <h3 className="text-xl font-extrabold mt-3 break-words">
+                    {storeDetails.name}
+                  </h3>
+                  <p className="text-xs text-white/80 font-medium mt-1">
+                    {storeDetails.industry_type}
+                  </p>
+                </div>
+                <div className="mt-8 space-y-3.5">
+                  <div className="flex items-center gap-2 text-xs">
+                    <svg className="h-4 w-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    <span className="truncate">{storeDetails.address || "Walang address"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <svg className="h-4 w-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <span>{storeDetails.contact || "Walang contact number"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="font-bold text-white/75 bg-white/20 px-2 py-0.5 rounded text-[10px]">
+                      Currency
+                    </span>
+                    <span>{storeDetails.currency}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Side */}
+              <form onSubmit={handleUpdateStoreSettings} className="flex-1 space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-[#064E3B]">Pamahalaan ang Tindahan</h3>
+                  <p className="text-xs text-[#57534E]">
+                    I-update ang mga pangunahing detalye ng iyong tindahan na makikita sa POS at sa mga digital receipt.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
+                      Pangalan ng Tindahan
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={storeDetails.name}
+                      onChange={(e) => setStoreDetails({ ...storeDetails, name: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
+                      Uri ng Industriya
+                    </label>
+                    <select
+                      value={storeDetails.industry_type}
+                      onChange={(e) => setStoreDetails({ ...storeDetails, industry_type: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl bg-white focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
+                    >
+                      <option value="Retail">Retail</option>
+                      <option value="Food">Food / Cafe</option>
+                      <option value="Services">Services</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
+                    Lokasyon / Address
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={storeDetails.address}
+                    onChange={(e) => setStoreDetails({ ...storeDetails, address: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
+                      Numero ng Telepono / Contact
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Hal. 09123456789 o contact@store.com"
+                      value={storeDetails.contact}
+                      onChange={(e) => setStoreDetails({ ...storeDetails, contact: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
+                      Simbolo ng Currency
+                    </label>
+                    <select
+                      value={storeDetails.currency}
+                      onChange={(e) => setStoreDetails({ ...storeDetails, currency: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl bg-white focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
+                    >
+                      <option value="₱">PHP (₱) - Philippine Peso</option>
+                      <option value="$">USD ($) - US Dollar</option>
+                      <option value="€">EUR (€) - Euro</option>
+                      <option value="¥">JPY/CNY (¥) - Yen/Yuan</option>
+                      <option value="£">GBP (£) - Pound Sterling</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-[#57534E]/10 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={savingSettings}
+                    className="px-6 py-3 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold rounded-xl text-xs transition flex items-center gap-2 shadow cursor-pointer disabled:opacity-75"
+                  >
+                    {savingSettings ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Inililigtas...</span>
+                      </>
+                    ) : (
+                      <span>I-save ang Pagbabago</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── MODAL: MAGDAGDAG NG BAGONG PRODUKTO (Original) ── */}
@@ -1058,7 +1355,7 @@ export const AdminDashboard = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold mb-1">
-                    Puhunan (₱)
+                    Puhunan ({storeDetails.currency || "₱"})
                   </label>
                   <input
                     type="number"
@@ -1076,7 +1373,7 @@ export const AdminDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold mb-1">
-                    Benta (₱)
+                    Benta ({storeDetails.currency || "₱"})
                   </label>
                   <input
                     type="number"
@@ -1302,7 +1599,7 @@ export const AdminDashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold mb-1">
-                    Puhunan (₱)
+                    Puhunan ({storeDetails.currency || "₱"})
                   </label>
                   <input
                     type="number"
@@ -1320,7 +1617,7 @@ export const AdminDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold mb-1">
-                    Benta (₱)
+                    Benta ({storeDetails.currency || "₱"})
                   </label>
                   <input
                     type="number"
@@ -1571,7 +1868,7 @@ const MOCK_STOCK_DISTRIBUTION = [
   { name: "Coffee", value: 10 },
 ];
 
-const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading = false }) => {
+const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading = false, currency = "₱" }) => {
   // 1. Loading state with premium shimmer animation
   if (loading) {
     return (
@@ -1778,7 +2075,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
                 <Line
                   type="monotone"
                   dataKey="benta"
-                  name="Kita (₱)"
+                  name={`Kita (${currency})`}
                   stroke="#064E3B"
                   strokeWidth={3}
                   activeDot={{ r: 6 }}
