@@ -54,7 +54,7 @@ export const LoginForm = () => {
         if (role === "manager") {
           navigate("/stores");
         } else if (role === "staff") {
-          navigate("/cashier/pos");
+          navigate("/stores");
         } else {
           navigate("/unauthorized");
         }
