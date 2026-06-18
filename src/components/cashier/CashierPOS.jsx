@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { Navbar } from "../shared/Navbar";
 import { useAuth } from "../../context/AuthContext";
 import { getProductsByStore, addProduct } from "../../services/productService";
@@ -598,15 +598,15 @@ export const CashierPOS = ({ embedded = false }) => {
     }
   };
 
-  const categories = [
-    "All",
-    "Soda",
-    "Bakery",
-    "Chips",
-    "Noodles",
-    "Coffee",
-    "Canned Goods",
-  ];
+  const categories = useMemo(() => {
+    const uniqueCategories = new Set();
+    products.forEach((product) => {
+      if (product.category && product.category.trim()) {
+        uniqueCategories.add(product.category);
+      }
+    });
+    return ["All", ...Array.from(uniqueCategories).sort()];
+  }, [products]);
 
   const filteredCatalog = products.filter((product) => {
     const matchesCategory =
