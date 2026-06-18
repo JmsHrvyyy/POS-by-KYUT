@@ -328,6 +328,10 @@ export const AdminDashboard = () => {
       setProdError("Maglagay ng valid na puhunan (cost price).");
       return;
     }
+    if (sellingPrice < costPrice) {
+      setProdError("Ang presyo ng benta ay hindi dapat mas mababa sa puhunan.");
+      return;
+    }
     if (isNaN(stockQty) || stockQty < 0) {
       setProdError("Maglagay ng valid na stock quantity.");
       return;
@@ -414,6 +418,12 @@ export const AdminDashboard = () => {
     e.preventDefault();
     if (!selectedProduct.name.trim() || !selectedProduct.category.trim()) {
       alert("Huwag iwanang blanko ang pangalan at kategorya.");
+      return;
+    }
+    const costPrice = parseFloat(selectedProduct.cost_price) || 0;
+    const sellingPrice = parseFloat(selectedProduct.selling_price) || 0;
+    if (sellingPrice < costPrice) {
+      alert("Ang presyo ng benta ay hindi dapat mas mababa sa puhunan.");
       return;
     }
 
@@ -1843,13 +1853,13 @@ export const AdminDashboard = () => {
 const COLORS = ["#064E3B", "#047857", "#10B981", "#34D399", "#A7F3D0"];
 
 const MOCK_SALES_DATA = [
-  { date: "Mon", benta: 4200 },
-  { date: "Tue", benta: 5100 },
-  { date: "Wed", benta: 3800 },
-  { date: "Thu", benta: 6200 },
-  { date: "Fri", benta: 7500 },
-  { date: "Sat", benta: 8900 },
-  { date: "Sun", benta: 9400 },
+  { date: "Mon", benta: 4200, kita: 1260 },
+  { date: "Tue", benta: 5100, kita: 1530 },
+  { date: "Wed", benta: 3800, kita: 1140 },
+  { date: "Thu", benta: 6200, kita: 1860 },
+  { date: "Fri", benta: 7500, kita: 2250 },
+  { date: "Sat", benta: 8900, kita: 2670 },
+  { date: "Sun", benta: 9400, kita: 2820 },
 ];
 
 const MOCK_TOP_PRODUCTS = [
@@ -1928,7 +1938,29 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
   let topProducts = MOCK_TOP_PRODUCTS;
   let stockDistribution = MOCK_STOCK_DISTRIBUTION;
 
-  if (!useMock) {
+  if (useMock) {
+    const mockPrices = {
+      "Coca-Cola 1.5L": 120,
+      "White Bread": 85,
+      "Instant Noodles": 25,
+      "Kape Barako": 150,
+      "Sardines": 35,
+    };
+    topProducts = MOCK_TOP_PRODUCTS.map((p) => ({
+      ...p,
+      name: `${p.name} (${currency}${mockPrices[p.name]?.toFixed(2) || "50.00"})`,
+    }));
+  } else {
+    // Create lookup maps for products cost and selling prices
+    const productCostMap = {};
+    const productPriceMap = {};
+    products.forEach((p) => {
+      if (p.name) {
+        productCostMap[p.name] = Number(p.cost_price) || 0;
+        productPriceMap[p.name] = Number(p.selling_price) || 0;
+      }
+    });
+
     // ── A. Compute Sales Performance (Last 7 Days ending today) ──
     const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const last7Days = [];
@@ -1939,6 +1971,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
         date: daysOfWeek[d.getDay()],
         dateStr: d.toDateString(),
         benta: 0,
+        kita: 0,
       });
     }
 
@@ -1949,9 +1982,29 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
       const matchedDay = last7Days.find((day) => day.dateStr === oDateStr);
       if (matchedDay) {
         matchedDay.benta += Number(order.total) || 0;
+
+        // Calculate cost & profit of items in this order
+        let orderCost = 0;
+        let orderRevenue = 0;
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach((item) => {
+            const qty = Number(item.quantity) || 0;
+            const price = Number(item.price) || productPriceMap[item.name] || 0;
+            const cost = productCostMap[item.name] || 0;
+            orderCost += cost * qty;
+            orderRevenue += price * qty;
+          });
+        }
+        const profitMargin = orderRevenue > 0 ? (orderRevenue - orderCost) / orderRevenue : 0;
+        const orderProfit = (Number(order.total) || 0) * profitMargin;
+        matchedDay.kita += orderProfit > 0 ? orderProfit : 0;
       }
     });
-    salesData = last7Days.map(({ date, benta }) => ({ date, benta }));
+    salesData = last7Days.map(({ date, benta, kita }) => ({
+      date,
+      benta,
+      kita: Math.round(kita * 100) / 100,
+    }));
 
     // ── B. Compute Top Products (by aggregated sold quantity) ──
     const productSoldCounts = {};
@@ -1965,10 +2018,16 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
       }
     });
 
-    const sortedProducts = Object.keys(productSoldCounts).map((name) => ({
-      name,
-      sold: productSoldCounts[name],
-    }));
+    const sortedProducts = Object.keys(productSoldCounts).map((name) => {
+      const productObj = products.find((p) => p.name === name);
+      const priceStr = productObj
+        ? ` (${currency}${Number(productObj.selling_price).toFixed(2)})`
+        : "";
+      return {
+        name: name + priceStr,
+        sold: productSoldCounts[name],
+      };
+    });
     sortedProducts.sort((a, b) => b.sold - a.sold);
     topProducts = sortedProducts.slice(0, 5);
 
@@ -2075,11 +2134,20 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
                 <Line
                   type="monotone"
                   dataKey="benta"
-                  name={`Kita (${currency})`}
+                  name={`Benta (Revenue) (${currency})`}
                   stroke="#064E3B"
                   strokeWidth={3}
                   activeDot={{ r: 6 }}
                 />
+                <Line
+                  type="monotone"
+                  dataKey="kita"
+                  name={`Kita (Net Profit) (${currency})`}
+                  stroke="#10B981"
+                  strokeWidth={3}
+                  activeDot={{ r: 6 }}
+                />
+                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
               </LineChart>
             </ResponsiveContainer>
           )}
