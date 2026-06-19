@@ -68,6 +68,14 @@ export const AdminDashboard = () => {
     }
   }, [userRole, navigate]);
 
+  // Track if this is the initial mount for page-level loading
+  const [isPageReady, setIsPageReady] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsPageReady(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
   // ── Tab Navigation ────────────────────────────────────────────
   // Main tabs: "inventory", "analytics", "settings"
   const [activeMainTab, setActiveMainTab] = useState("inventory");
@@ -846,7 +854,19 @@ export const AdminDashboard = () => {
     <div className="min-h-screen bg-[#FAFAF9] font-sans text-[#0C0A09]">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {!isPageReady && (
+        <div className="fixed inset-0 top-16 bg-[#FAFAF9] z-40 flex items-center justify-center">
+          <div className="text-center">
+            <svg className="animate-spin h-8 w-8 text-[#064E3B] mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-xs text-[#57534E]">Kinakarga...</p>
+          </div>
+        </div>
+      )}
+
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-opacity duration-300 ${!isPageReady ? 'opacity-0' : 'opacity-100'}`}>
         {/* Header Section */}
         <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>

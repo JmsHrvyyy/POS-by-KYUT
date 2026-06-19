@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -90,18 +90,18 @@ export const Navbar = () => {
                 if (!link.visible) return null;
                 const isActive = currentPath === link.path;
                 return (
-                  <a
+                  <Link
                     key={link.path}
-                    href={link.path}
+                    to={link.path}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                      isActive 
-                        ? "bg-white/10 text-white shadow-sm border border-white/10" 
+                      isActive
+                        ? "bg-white/10 text-white shadow-sm border border-white/10"
                         : "text-white/80 hover:bg-white/5 hover:text-white"
                     }`}
                   >
                     {link.icon}
                     <span>{link.name}</span>
-                  </a>
+                  </Link>
                 );
               })}
             </div>
@@ -193,18 +193,18 @@ export const Navbar = () => {
             if (!link.visible) return null;
             const isActive = currentPath === link.path;
             return (
-              <a
+              <Link
                 key={link.path}
-                href={link.path}
+                to={link.path}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${
-                  isActive 
-                    ? "bg-white/10 text-white shadow border border-white/10" 
+                  isActive
+                    ? "bg-white/10 text-white shadow border border-white/10"
                     : "text-white/80 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 {link.icon}
                 <span>{link.name}</span>
-              </a>
+              </Link>
             );
           })}
         </div>

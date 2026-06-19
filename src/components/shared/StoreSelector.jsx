@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
 import { Navbar } from "./Navbar";
 import { createStore, getStoresByManager, getAssignedStoreIds } from "../../services/storeService";
 import { doc, getDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
@@ -394,19 +395,19 @@ export const StoreSelector = () => {
             </div>
             <div className="flex gap-3 w-full sm:w-auto">
               {userRole === "manager" && (
-                <a 
-                  href="/admin/dashboard" 
+                <Link
+                  to="/admin/dashboard"
                   className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-[#064E3B]/20 text-[#064E3B] font-bold text-xs hover:bg-[#064E3B]/5 transition text-center"
                 >
                   Admin View →
-                </a>
+                </Link>
               )}
-              <a 
-                href="/cashier/pos" 
+              <Link
+                to="/cashier/pos"
                 className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-[#064E3B] text-white font-bold text-xs hover:bg-[#064E3B]/90 transition text-center"
               >
                 Buksan ang POS →
-              </a>
+              </Link>
             </div>
           </div>
         )}
