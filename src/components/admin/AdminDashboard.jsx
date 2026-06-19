@@ -117,6 +117,7 @@ export const AdminDashboard = () => {
   const [staffError, setStaffError] = useState("");
   const [staffSuccess, setStaffSuccess] = useState("");
   const [invitationInfo, setInvitationInfo] = useState(null);
+  const [staffMenuOpen, setStaffMenuOpen] = useState(null);
 
   // ── Toast State ───────────────────────────────────────────────
   const [toast, setToast] = useState(null);
@@ -637,6 +638,31 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleRemoveStaff = async (staff) => {
+    const seguro = window.confirm(
+      `Sigurado ka bang nais mong tanggalin si "${staff.name}" mula sa tindahang ito? Hindi sila makaka-access na pagkatapos.`,
+    );
+    if (!seguro) return;
+
+    try {
+      if (isMockStore(activeStoreId)) {
+        setStaffList((prev) => prev.filter((s) => s.id !== staff.id));
+        showToast(`Tinanggal na si ${staff.name} mula sa staff!`);
+        setStaffMenuOpen(null);
+        return;
+      }
+
+      const docRef = doc(db, "store_staff", staff.id);
+      await deleteDoc(docRef);
+      setStaffList((prev) => prev.filter((s) => s.id !== staff.id));
+      showToast(`Tinanggal na si ${staff.name} mula sa staff!`);
+      setStaffMenuOpen(null);
+    } catch (err) {
+      console.error("handleRemoveStaff:", err);
+      showToast("Hindi matanggal ang staff.", "error");
+    }
+  };
+
   const lowStockCount = products.filter((p) => p.stock_quantity <= 10).length;
   const activeStaffCount = staffList.filter(
     (s) => s.status === "Active",
@@ -1086,11 +1112,12 @@ export const AdminDashboard = () => {
                           <th className="pb-3">Role</th>
                           <th className="pb-3">Email</th>
                           <th className="pb-3">Status</th>
+                          <th className="pb-3 text-center">Aksyon</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#57534E]/5">
                         {staffList.map((s, i) => (
-                          <tr key={i}>
+                          <tr key={i} className="hover:bg-[#FAFAF9]/40 relative">
                             <td className="py-3.5 font-bold">{s.name}</td>
                             <td className="py-3.5 text-[#57534E] font-medium">
                               <select
@@ -1118,6 +1145,29 @@ export const AdminDashboard = () => {
                               >
                                 {s.status || "Active"}
                               </span>
+                            </td>
+                            <td className="py-3.5 text-center relative">
+                              <div className="inline-block">
+                                <button
+                                  onClick={() => setStaffMenuOpen(staffMenuOpen === i ? null : i)}
+                                  className="p-1.5 hover:bg-stone-100 rounded-lg transition cursor-pointer text-[#57534E]"
+                                  title="More options"
+                                >
+                                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10.5 1.5H9.5V3.5H10.5V1.5ZM10.5 8.5H9.5V10.5H10.5V8.5ZM10.5 15.5H9.5V17.5H10.5V15.5Z" />
+                                  </svg>
+                                </button>
+                                {staffMenuOpen === i && (
+                                  <div className="absolute right-0 mt-1 w-32 bg-white border border-stone-200 rounded-lg shadow-lg z-10">
+                                    <button
+                                      onClick={() => handleRemoveStaff(s)}
+                                      className="w-full text-left px-4 py-2 text-rose-700 hover:bg-rose-50 text-xs font-bold rounded-lg transition"
+                                    >
+                                      Tanggalin
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}

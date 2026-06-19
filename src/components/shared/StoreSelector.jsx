@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Navbar } from "./Navbar";
 import { createStore, getStoresByManager, getAssignedStoreIds } from "../../services/storeService";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import { db } from "../../config/firebase";
 
 
@@ -10,16 +10,17 @@ import { db } from "../../config/firebase";
 export const StoreSelector = () => {
   const { activeStoreId, setActiveStoreId, userRole, currentUser } = useAuth();
   const [stores, setStores] = useState([]);
-  
+
   // Filtering & Search states
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  
+
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newStore, setNewStore] = useState({ name: "", industry: "Retail", address: "" });
   const [modalError, setModalError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [storeMenuOpen, setStoreMenuOpen] = useState(null);
 
   // Load stores dynamically based on role
   useEffect(() => {
@@ -93,6 +94,43 @@ export const StoreSelector = () => {
     } catch (err) {
       console.error("Create store failed:", err);
       setModalError(err.message || "May naganap na error habang gumagawa ng tindahan.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLeaveStore = async (storeId) => {
+    const store = stores.find((s) => s.id === storeId);
+    const confirmLeave = window.confirm(
+      `Sigurado ka bang nais mong umalis sa "${store?.name}"? Hindi mo na makaka-access ang tindahang ito pagkatapos.`
+    );
+    if (!confirmLeave) return;
+
+    try {
+      setLoading(true);
+      const storeStaffSnap = await getDocs(
+        query(
+          collection(db, "store_staff"),
+          where("store_id", "==", storeId),
+          where("cashier_id", "==", currentUser.uid)
+        )
+      );
+
+      for (const doc of storeStaffSnap.docs) {
+        await deleteDoc(doc.ref);
+      }
+
+      setStores((prev) => prev.filter((s) => s.id !== storeId));
+
+      if (activeStoreId === storeId) {
+        setActiveStoreId(null);
+      }
+
+      alert(`Umalis ka na sa "${store?.name}"`);
+      setStoreMenuOpen(null);
+    } catch (err) {
+      console.error("handleLeaveStore:", err);
+      alert("Hindi ka makapag-alis mula sa tindahan.");
     } finally {
       setLoading(false);
     }
@@ -256,29 +294,54 @@ export const StoreSelector = () => {
               return (
                 <div
                   key={store.id}
-                  className={`p-6 rounded-2xl bg-white border flex flex-col justify-between transition-all duration-300 hover:scale-[1.01] ${
-                    isSelected 
-                      ? "border-[#064E3B] shadow-md ring-2 ring-[#064E3B]/10" 
+                  className={`p-6 rounded-2xl bg-white border flex flex-col justify-between transition-all duration-300 hover:scale-[1.01] relative ${
+                    isSelected
+                      ? "border-[#064E3B] shadow-md ring-2 ring-[#064E3B]/10"
                       : "border-[#57534E]/15 hover:border-[#57534E]/30 shadow-sm"
                   }`}
                 >
                   <div>
                     <div className="flex items-start justify-between mb-4">
                       {getIndustryIcon(store.industry_type)}
-                      <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
-                        store.isMock 
-                          ? "bg-[#57534E]/10 text-[#57534E]"
-                          : "bg-emerald-500/10 text-emerald-700"
-                      }`}>
-                        {store.isMock ? "Mock" : "Live"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
+                          store.isMock
+                            ? "bg-[#57534E]/10 text-[#57534E]"
+                            : "bg-emerald-500/10 text-emerald-700"
+                        }`}>
+                          {store.isMock ? "Mock" : "Live"}
+                        </span>
+                        {userRole === "staff" && (
+                          <div className="relative">
+                            <button
+                              onClick={() => setStoreMenuOpen(storeMenuOpen === store.id ? null : store.id)}
+                              className="p-1.5 hover:bg-stone-100 rounded-lg transition cursor-pointer text-[#57534E]"
+                              title="More options"
+                            >
+                              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10.5 1.5H9.5V3.5H10.5V1.5ZM10.5 8.5H9.5V10.5H10.5V8.5ZM10.5 15.5H9.5V17.5H10.5V15.5Z" />
+                              </svg>
+                            </button>
+                            {storeMenuOpen === store.id && (
+                              <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-stone-200 rounded-lg shadow-lg z-20">
+                                <button
+                                  onClick={() => handleLeaveStore(store.id)}
+                                  className="w-full text-left px-4 py-2 text-rose-700 hover:bg-rose-50 text-xs font-bold rounded-lg transition"
+                                >
+                                  Umalis
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    
+
                     <h3 className="font-extrabold text-lg text-[#0C0A09] leading-snug line-clamp-1">
                       {store.name}
                     </h3>
                     <p className="text-xs text-[#57534E] font-semibold mt-0.5 mb-3">{store.industry_type}</p>
-                    
+
                     <p className="text-xs text-[#57534E]/80 flex items-center gap-1.5 mb-6">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#57534E]/50 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -291,8 +354,8 @@ export const StoreSelector = () => {
                   <button
                     onClick={() => handleSelectStore(store.id)}
                     className={`w-full py-3 rounded-xl text-xs font-bold transition duration-200 flex items-center justify-center gap-2 cursor-pointer ${
-                      isSelected 
-                        ? "bg-[#064E3B] text-white" 
+                      isSelected
+                        ? "bg-[#064E3B] text-white"
                         : "bg-[#FAFAF9] text-[#57534E] border border-[#57534E]/25 hover:bg-[#57534E]/5"
                     }`}
                   >
