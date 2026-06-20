@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
+import { useLanguage } from "../../context/LanguageContext";
 
 export const CustomerDisplay = () => {
-  const [cartData, setCartData] = useState({
-    items: [],
-    subtotal: 0,
-    discount: 0,
-    total: 0,
+  const { t, language } = useLanguage();
+  const [cartData, setCartData] = useState(() => {
+    try {
+      const saved = localStorage.getItem("customer_cart");
+      return saved ? JSON.parse(saved) : { items: [], subtotal: 0, discount: 0, total: 0 };
+    } catch (err) {
+      console.error("Error loading customer cart on mount:", err);
+      return { items: [], subtotal: 0, discount: 0, total: 0 };
+    }
   });
 
   const [time, setTime] = useState(new Date());
@@ -16,18 +21,8 @@ export const CustomerDisplay = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // 2. Initial load and BroadcastChannel setup
+  // 2. BroadcastChannel setup
   useEffect(() => {
-    // Load initial cart data from localStorage if exists
-    try {
-      const saved = localStorage.getItem("customer_cart");
-      if (saved) {
-        setCartData(JSON.parse(saved));
-      }
-    } catch (err) {
-      console.error("Error loading customer cart on mount:", err);
-    }
-
     // Subscribe to BroadcastChannel
     const channel = new BroadcastChannel("customer_display");
     channel.onmessage = (event) => {
@@ -47,8 +42,8 @@ export const CustomerDisplay = () => {
   }, []);
 
   const { items, subtotal, discount, total } = cartData;
-  const formattedTime = time.toLocaleTimeString("fil-PH", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  const formattedDate = time.toLocaleDateString("fil-PH", { dateStyle: "long" });
+  const formattedTime = time.toLocaleTimeString(language === "fil" ? "fil-PH" : "en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const formattedDate = time.toLocaleDateString(language === "fil" ? "fil-PH" : "en-US", { dateStyle: "long" });
 
   return (
     <div className="min-h-screen bg-[#FAFAF9] font-sans text-[#0C0A09] flex flex-col md:flex-row overflow-hidden select-none">
@@ -69,10 +64,10 @@ export const CustomerDisplay = () => {
         {/* Welcome greeting / Animations */}
         <div className="relative z-10 my-auto py-10">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
-            Mabuhay!
+            {t("welcomeGreeting")}
           </h1>
           <p className="text-lg text-emerald-100/90 mt-4 leading-relaxed max-w-sm">
-            Salamat sa inyong pagtangkilik sa aming tindahan. Paglingkuran po namin kayo ng buong KYUT.
+            {t("supportMessage")}
           </p>
           <div className="mt-8 flex gap-2">
             <span className="h-1.5 w-12 rounded-full bg-emerald-400"></span>
@@ -104,10 +99,10 @@ export const CustomerDisplay = () => {
               <span className="absolute top-4 right-4 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse"></span>
             </div>
             <h2 className="text-2xl font-extrabold text-[#0C0A09] tracking-tight">
-              Welcome Customer!
+              {t("welcomeCustomer")}
             </h2>
             <p className="text-sm text-[#57534E] mt-2 max-w-[280px] leading-relaxed">
-              Handang mag-proseso ng iyong mga bibilhin. Awtomatikong lalabas dito ang iyong order details.
+              {t("readyToProcess")}
             </p>
           </div>
         ) : (
@@ -117,12 +112,12 @@ export const CustomerDisplay = () => {
             <div className="flex justify-between items-center mb-6 border-b border-stone-100 pb-4">
               <div>
                 <h2 className="text-lg font-extrabold text-[#064E3B] uppercase tracking-wider">
-                  Detalye ng Pagbili
+                  {t("purchaseDetails")}
                 </h2>
-                <p className="text-xs text-stone-500">Ito ang listahan ng mga nakalagay sa iyong cart</p>
+                <p className="text-xs text-stone-500">{t("cartListDesc")}</p>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-widest bg-emerald-50 border border-emerald-200 text-[#064E3B] px-3 py-1 rounded-xl">
-                {items.length} items
+                {items.length} {t("itemsCount")}
               </span>
             </div>
 
@@ -137,7 +132,7 @@ export const CustomerDisplay = () => {
                     <span className="text-[11px] text-stone-500 font-semibold mt-1 inline-flex items-center gap-1.5 uppercase bg-stone-100 px-2.5 py-0.5 rounded-lg">
                       Qty: <strong className="text-stone-950 font-bold">{item.quantity}</strong> 
                       <span className="text-stone-300">|</span> 
-                      ₱{(item.price || 0).toFixed(2)} bawat isa
+                      ₱{(item.price || 0).toFixed(2)} {t("eachPrice")}
                     </span>
                   </div>
                   <span className="font-extrabold text-stone-950 text-base font-mono">
@@ -161,7 +156,7 @@ export const CustomerDisplay = () => {
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-4 border-t border-stone-200 mt-2">
-                  <span className="text-sm font-extrabold text-stone-900 uppercase">Kabuuang Halaga:</span>
+                  <span className="text-sm font-extrabold text-stone-900 uppercase">{t("totalAmountLabel")}</span>
                   <span className="text-2xl font-black text-[#064E3B] font-mono leading-none">
                     ₱{(total || 0).toFixed(2)}
                   </span>

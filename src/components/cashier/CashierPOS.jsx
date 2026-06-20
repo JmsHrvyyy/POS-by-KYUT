@@ -1,7 +1,8 @@
-﻿import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Navbar } from "../shared/Navbar";
 import { useAuth } from "../../context/AuthContext";
-import { getProductsByStore, addProduct } from "../../services/productService";
+import { useLanguage } from "../../context/LanguageContext";
+import { getProductsByStore } from "../../services/productService";
 import { placeOrder } from "../../services/orderService";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -180,7 +181,8 @@ const renderCategoryIcon = (category) => {
 };
 
 export const CashierPOS = ({ embedded = false }) => {
-  const { activeStoreId, currentUser, userRole } = useAuth();
+  const { activeStoreId, currentUser } = useAuth();
+  const { t, language } = useLanguage();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -188,17 +190,7 @@ export const CashierPOS = ({ embedded = false }) => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [latestOrder, setLatestOrder] = useState(null);
 
-  // States for adding a new product dynamically in POS
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [addingProduct, setAddingProduct] = useState(false);
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    price: "",
-    stock: "",
-    category: "Soda",
-  });
-  const [addError, setAddError] = useState("");
-  const [addSuccess, setAddSuccess] = useState("");
+  // (Adding product states removed to resolve unused vars lint errors)
 
   // Cart state & notification state
   const [cart, setCart] = useState([]);
@@ -260,70 +252,17 @@ export const CashierPOS = ({ embedded = false }) => {
         setProducts(data);
       } catch (err) {
         console.error("Error fetching products:", err);
-        setError("Hindi ma-load ang mga produkto. Subukan muli.");
+        setError(t("noProductsDesc"));
       } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStoreId]);
 
-  const handleAddProduct = async (e) => {
-    e.preventDefault();
-    setAddError("");
-    setAddSuccess("");
-
-    if (userRole === "staff") {
-      setAddError("Hindi pinapayagan ang mga staff na magdagdag ng produkto.");
-      return;
-    }
-
-    if (!newProduct.name.trim()) {
-      setAddError("Kinakailangan ang pangalan ng produkto.");
-      return;
-    }
-    const priceNum = parseFloat(newProduct.price);
-    if (isNaN(priceNum) || priceNum <= 0) {
-      setAddError("Maglagay ng valid na presyo (dapat mas mataas sa 0).");
-      return;
-    }
-    const stockNum = parseInt(newProduct.stock, 10);
-    if (isNaN(stockNum) || stockNum < 0) {
-      setAddError(
-        "Maglagay ng valid na dami ng stock (dapat hindi bababa sa 0).",
-      );
-      return;
-    }
-
-    try {
-      setAddingProduct(true);
-      const created = await addProduct(
-        {
-          name: newProduct.name,
-          selling_price: priceNum, // Ginawang selling_price para tugma sa admin model ninyo
-          stock_quantity: stockNum, // Ginawang stock_quantity para magkasundo sa admin model
-          category: newProduct.category,
-        },
-        activeStoreId,
-      );
-
-      setProducts((prev) => [...prev, created]);
-      setAddSuccess("Matagumpay na naidagdag ang produkto!");
-      setNewProduct({ name: "", price: "", stock: "", category: "Soda" });
-      setTimeout(() => {
-        setIsAddModalOpen(false);
-        setAddSuccess("");
-      }, 1000);
-    } catch (err) {
-      console.error("Save product failed:", err);
-      setAddError(
-        err.message || "May naganap na error habang sine-save ang produkto.",
-      );
-    } finally {
-      setAddingProduct(false);
-    }
-  };
+  // (handleAddProduct removed to resolve unused function lint error)
 
   const addToCart = (product) => {
     // Kinukuha ang stock na may dynamic fallback para sa admin keys
@@ -338,7 +277,7 @@ export const CashierPOS = ({ embedded = false }) => {
 
     if (currentStock <= 0) {
       showNotification(
-        `Paumanhin, walang natitirang stock para sa ${product.name}.`,
+        t("outOfStockMsg", { productName: product.name }),
         "error",
       );
       return;
@@ -349,19 +288,19 @@ export const CashierPOS = ({ embedded = false }) => {
       if (existing) {
         if (existing.quantity >= currentStock) {
           showNotification(
-            `Limitadong stock: Hanggang ${currentStock} units lamang ng ${product.name} ang magagamit.`,
+            t("limitedStockMsg", { stock: currentStock, productName: product.name }),
             "error",
           );
           return prev;
         }
-        showNotification(`Idinagdag ang ${product.name} sa cart.`, "success");
+        showNotification(t("addedToCartMsg", { productName: product.name }), "success");
         return prev.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item,
         );
       }
-      showNotification(`Idinagdag ang ${product.name} sa cart.`, "success");
+      showNotification(t("addedToCartMsg", { productName: product.name }), "success");
       return [
         ...prev,
         { ...product, price: itemPrice, stock: currentStock, quantity: 1 },
@@ -385,7 +324,7 @@ export const CashierPOS = ({ embedded = false }) => {
             const nextQty = item.quantity + amount;
             if (nextQty > currentStock) {
               showNotification(
-                `Limitadong stock: Hanggang ${currentStock} units lamang ng ${product.name} ang magagamit.`,
+                t("limitedStockMsg", { stock: currentStock, productName: product.name }),
                 "error",
               );
               return item;
@@ -401,7 +340,7 @@ export const CashierPOS = ({ embedded = false }) => {
   const clearCart = () => {
     if (cart.length > 0) {
       setCart([]);
-      showNotification("Linisin ang cart.", "success");
+      showNotification(t("cleanCartSuccess"), "success");
     }
   };
 
@@ -432,8 +371,8 @@ export const CashierPOS = ({ embedded = false }) => {
     const orderDate = order.created_at?.toDate
       ? order.created_at
           .toDate()
-          .toLocaleString("fil-PH", { dateStyle: "medium", timeStyle: "short" })
-      : new Date().toLocaleString("fil-PH", {
+          .toLocaleString(language === "fil" ? "fil-PH" : "en-US", { dateStyle: "medium", timeStyle: "short" })
+      : new Date().toLocaleString(language === "fil" ? "fil-PH" : "en-US", {
           dateStyle: "medium",
           timeStyle: "short",
         });
@@ -472,7 +411,7 @@ export const CashierPOS = ({ embedded = false }) => {
 
     const printHtml = `
       <!DOCTYPE html>
-      <html lang="tl">
+      <html lang="${language}">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -491,7 +430,7 @@ export const CashierPOS = ({ embedded = false }) => {
         <div class="receipt">
           <div style="text-align:center;padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;">
             <div style="font-size:20px;font-weight:900;color:#064E3B;letter-spacing:-0.5px;">POS-by-KYUT</div>
-            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#57534E;margin-top:4px;">Store Receipt</div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#57534E;margin-top:4px;">${t("receiptTitle")}</div>
             <div style="font-size:9px;color:#57534E;margin-top:8px;text-align:left;">
               <div>STORE ID: ${order.store_id}</div>
               <div>TXID: ${order.id}</div>
@@ -501,7 +440,7 @@ export const CashierPOS = ({ embedded = false }) => {
 
           <div style="padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;">
             <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#57534E;margin-bottom:8px;">
-              <span>Produkto</span><span>Halaga</span>
+              <span>${t("productColumn")}</span><span>${t("priceColumn")}</span>
             </div>
             <div style="font-size:11px;">${itemsHtml}</div>
           </div>
@@ -513,19 +452,19 @@ export const CashierPOS = ({ embedded = false }) => {
             </div>
             ${discountHtml}
             <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;color:#0C0A09;padding-top:8px;border-top:1px dashed #ccc;margin-top:6px;">
-              <span>KABUUAN:</span>
+              <span>${t("totalAmountLabel").toUpperCase()}</span>
               <span style="color:#064E3B;">\u20B1${(order.total || 0).toFixed(2)}</span>
             </div>
           </div>
 
           <div style="text-align:center;font-size:9px;color:#57534E;padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;">
             <div>Cashier: <strong>${order.cashier_name}</strong></div>
-            <div style="margin-top:6px;font-weight:700;color:#064E3B;">Maraming salamat po!</div>
+            <div style="margin-top:6px;font-weight:700;color:#064E3B;">${t("thankYouMessage")}</div>
           </div>
 
           <div style="display:flex;flex-direction:column;align-items:center;padding-top:8px;">
             <img src="${qrCodeUrl}" alt="QR Code" style="width:110px;height:110px;" />
-            <div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-top:6px;text-align:center;">I-scan para sa digital receipt</div>
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-top:6px;text-align:center;">${t("scanForDigitalReceipt")}</div>
           </div>
         </div>
         <script>
@@ -545,7 +484,7 @@ export const CashierPOS = ({ embedded = false }) => {
   const handleCheckout = async () => {
     if (cart.length === 0) {
       showNotification(
-        "Mangyaring magdagdag muna ng produkto sa cart.",
+        t("addProdToCartFirst"),
         "error",
       );
       return;
@@ -586,13 +525,13 @@ export const CashierPOS = ({ embedded = false }) => {
       setLatestOrder(result);
       setShowReceipt(true);
       showNotification(
-        `Matagumpay ang Checkout! Order ID: ${result.id}`,
+        `${t("checkoutSuccess")} ${result.id}`,
         "success",
       );
       setCart([]);
     } catch (err) {
       console.error("Checkout failed:", err);
-      showNotification("Hindi ma-proseso ang checkout. Subukan muli.", "error");
+      showNotification(t("checkoutError"), "error");
     } finally {
       setCheckoutLoading(false);
     }
@@ -627,10 +566,10 @@ export const CashierPOS = ({ embedded = false }) => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#57534E]/10">
           <div>
             <h2 className="text-xl font-extrabold text-[#064E3B]">
-              Katalogo ng Produkto
+              {t("productCatalog")}
             </h2>
             <p className="text-xs text-[#57534E]">
-              Pumili ng produkto para idagdag sa kasalukuyang cart
+              {t("selectProductDesc")}
             </p>
           </div>
           <div className="flex items-center gap-3.5 self-start sm:self-center">
@@ -665,7 +604,7 @@ export const CashierPOS = ({ embedded = false }) => {
               </span>
               <input
                 type="text"
-                placeholder="Maghanap ng produkto ayon sa pangalan o kategorya..."
+                placeholder={t("searchProductPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-[#FAFAF9] border border-[#57534E]/20 rounded-xl text-sm text-[#0C0A09] placeholder-[#57534E]/50 focus:outline-none focus:ring-2 focus:ring-[#064E3B]/20 focus:border-[#064E3B] transition"
@@ -695,7 +634,7 @@ export const CashierPOS = ({ embedded = false }) => {
               type="button"
               onClick={() => setIsScannerOpen(true)}
               className="px-4.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white rounded-xl flex items-center justify-center transition shadow-sm cursor-pointer border border-[#064E3B]/10 active:scale-[0.98]"
-              title="I-scan ang Barcode ng Produkto"
+              title={t("scannerTooltip")}
             >
               <svg
                 className="w-5 h-5 text-white"
@@ -731,7 +670,7 @@ export const CashierPOS = ({ embedded = false }) => {
                     : "bg-[#FAFAF9] text-[#57534E] hover:bg-[#57534E]/10 border border-[#57534E]/15"
                 }`}
               >
-                {cat === "All" ? "Lahat ng Kategorya" : cat}
+                {cat === "All" ? t("allCategories") : cat}
               </button>
             ))}
           </div>
@@ -762,7 +701,7 @@ export const CashierPOS = ({ embedded = false }) => {
                 ></path>
               </svg>
               <p className="text-xs text-[#57534E] mt-3 font-semibold">
-                Kinukuha ang mga produkto...
+                {t("loadingProducts")}
               </p>
             </div>
           ) : error ? (
@@ -772,7 +711,7 @@ export const CashierPOS = ({ embedded = false }) => {
                 onClick={() => window.location.reload()}
                 className="mt-3 px-4 py-2 bg-[#57534E] hover:bg-[#57534E]/90 text-white rounded-xl text-xs font-bold transition cursor-pointer"
               >
-                I-refresh
+                {t("refreshPageButton")}
               </button>
             </div>
           ) : products.length === 0 ? (
@@ -794,10 +733,10 @@ export const CashierPOS = ({ embedded = false }) => {
                 </svg>
               </div>
               <h3 className="font-extrabold text-sm text-[#0C0A09]">
-                Walang Produkto sa Tindahang Ito
+                {t("noProductsTitle")}
               </h3>
               <p className="text-xs text-[#57534E] mt-1 max-w-[240px] leading-relaxed">
-                Wala pang paninda ang tindahang ito sa database. Pumunta sa Admin Dashboard upang magdagdag ng produkto.
+                {t("noProductsDesc")}
               </p>
             </div>
           ) : filteredCatalog.length > 0 ? (
@@ -836,12 +775,13 @@ export const CashierPOS = ({ embedded = false }) => {
                       {isOutOfStock && (
                         <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center">
                           <span className="bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-xl shadow-md">
-                            Walang Stock
+                            {language === "fil" ? "Walang Stock" : "Out of Stock"}
                           </span>
                         </div>
                       )}
                     </div>
                     <div className="flex-1 flex flex-col justify-between">
+                      {/* Name */}
                       <div>
                         <h4 className="font-extrabold text-sm text-[#0C0A09] group-hover:text-[#064E3B] transition-colors line-clamp-2 min-h-[40px]">
                           {product.name}
@@ -855,12 +795,12 @@ export const CashierPOS = ({ embedded = false }) => {
                           ) : isLowStock ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-100 animate-pulse">
                               <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                              Mababa ({currentStock} left)
+                              {language === "fil" ? `Mababa (${currentStock} left)` : `Low (${currentStock} left)`}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-[#064E3B] bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-100">
                               <span className="w-1.5 h-1.5 rounded-full bg-[#064E3B]" />
-                              May stock ({currentStock})
+                              {language === "fil" ? `May stock (${currentStock})` : `In Stock (${currentStock})`}
                             </span>
                           )}
                         </div>
@@ -868,7 +808,7 @@ export const CashierPOS = ({ embedded = false }) => {
                       <div className="flex justify-between items-center mt-4 pt-3 border-t border-stone-100">
                         <div className="flex flex-col">
                           <span className="text-[10px] text-[#57534E]/60 uppercase font-bold leading-none">
-                            Presyo
+                            {t("priceColumn")}
                           </span>
                           {/* LIGTAS NA PUSH: Dito naayos ang toFixed crash gamit ang fallback local variable key */}
                           <span className="font-extrabold text-[#064E3B] text-base">
@@ -914,10 +854,10 @@ export const CashierPOS = ({ embedded = false }) => {
                 />
               </svg>
               <p className="text-sm font-bold text-[#57534E]">
-                Walang nahanap na produkto.
+                {language === "fil" ? "Walang nahanap na produkto." : "No products found."}
               </p>
               <p className="text-xs text-[#57534E]/70 mt-1">
-                Subukang baguhin ang iyong keyword o filter.
+                {t("noStoresFoundDesc")}
               </p>
             </div>
           )}
@@ -937,14 +877,14 @@ export const CashierPOS = ({ embedded = false }) => {
               >
                 <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 100-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
               </svg>
-              Kasalukuyang Cart
+              {t("currentCartTitle")}
             </h3>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => window.open("/pos/customer-display", "CustomerDisplay", "width=1000,height=700")}
                 className="text-[10px] uppercase font-bold text-[#064E3B] hover:text-[#064E3B]/80 flex items-center gap-1.5 bg-[#064E3B]/10 hover:bg-[#064E3B]/15 px-2.5 py-1.5 rounded-xl transition cursor-pointer"
-                title="Buksan ang Display sa Customer Monitor"
+                title={language === "fil" ? "Buksan ang Display sa Customer Monitor" : "Open Customer Display Monitor"}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -956,7 +896,7 @@ export const CashierPOS = ({ embedded = false }) => {
                   onClick={clearCart}
                   className="text-xs text-[#F97316] font-bold hover:underline cursor-pointer"
                 >
-                  I-clear
+                  {t("clearCartButton")}
                 </button>
               )}
             </div>
@@ -978,7 +918,7 @@ export const CashierPOS = ({ embedded = false }) => {
                       {item.name}
                     </span>
                     <span className="text-[10px] text-[#57534E]">
-                      ₱{price} bawat isa
+                      ₱{price} {t("eachPrice")}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -1019,9 +959,9 @@ export const CashierPOS = ({ embedded = false }) => {
                     d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5h6.75"
                   />
                 </svg>
-                <p className="text-xs font-bold">Walang produkto sa cart.</p>
+                <p className="text-xs font-bold">{t("emptyCartTitle")}</p>
                 <p className="text-[10px] mt-0.5">
-                  Pumili ng mga item sa katalogo.
+                  {t("emptyCartDesc")}
                 </p>
               </div>
             )}
@@ -1035,7 +975,7 @@ export const CashierPOS = ({ embedded = false }) => {
             <span>₱{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-xs text-[#57534E] font-medium items-center">
-            <span>Discount (%):</span>
+            <span>{t("discountLabel")} (%):</span>
             <select
               className="bg-[#FAFAF9] border border-[#57534E]/20 rounded px-1.5 py-0.5 text-xs text-[#0C0A09] focus:outline-none focus:border-[#064E3B]"
               value={discount}
@@ -1048,7 +988,7 @@ export const CashierPOS = ({ embedded = false }) => {
             </select>
           </div>
           <div className="flex justify-between text-sm font-extrabold text-[#0C0A09] pt-2 border-t border-dashed border-[#57534E]/10">
-            <span>Kabuuang Halaga:</span>
+            <span>{t("totalAmountLabel")}</span>
             <span className="text-lg text-[#064E3B]">₱{total.toFixed(2)}</span>
           </div>
           <button
@@ -1078,7 +1018,7 @@ export const CashierPOS = ({ embedded = false }) => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                <span>Pinoproseso ang Bayad...</span>
+                <span>{t("processingButton")}</span>
               </>
             ) : (
               <>
@@ -1094,7 +1034,7 @@ export const CashierPOS = ({ embedded = false }) => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>Iproseso ang Bayad</span>
+                <span>{t("checkoutButton")}</span>
               </>
             )}
           </button>
@@ -1167,7 +1107,7 @@ export const CashierPOS = ({ embedded = false }) => {
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                Matagumpay na Bayad!
+                {t("checkoutSuccess").split("!")[0]}!
               </h3>
               <button
                 onClick={() => {
@@ -1176,7 +1116,7 @@ export const CashierPOS = ({ embedded = false }) => {
                 }}
                 className="text-xs text-[#57534E] font-bold hover:underline cursor-pointer"
               >
-                Isara
+                {t("closeButton")}
               </button>
             </div>
             <div
@@ -1188,7 +1128,7 @@ export const CashierPOS = ({ embedded = false }) => {
                   POS-by-KYUT
                 </span>
                 <p className="text-[9px] font-bold text-[#57534E] uppercase tracking-wider mt-0.5">
-                  Store Receipt
+                  {t("receiptTitle")}
                 </p>
                 <div className="text-[9px] text-[#57534E]/80 mt-1.5 font-mono space-y-0.5 text-left">
                   <div>STORE ID: {latestOrder.store_id}</div>
@@ -1198,11 +1138,11 @@ export const CashierPOS = ({ embedded = false }) => {
                     {latestOrder.created_at?.toDate
                       ? latestOrder.created_at
                           .toDate()
-                          .toLocaleString("fil-PH", {
+                          .toLocaleString(language === "fil" ? "fil-PH" : "en-US", {
                             dateStyle: "short",
                             timeStyle: "short",
                           })
-                      : new Date().toLocaleString("fil-PH", {
+                      : new Date().toLocaleString(language === "fil" ? "fil-PH" : "en-US", {
                           dateStyle: "short",
                           timeStyle: "short",
                         })}
@@ -1211,8 +1151,8 @@ export const CashierPOS = ({ embedded = false }) => {
               </div>
               <div className="py-3 border-b border-dashed border-[#57534E]/20">
                 <div className="font-bold text-[9px] uppercase text-[#57534E] tracking-wider mb-1.5 flex justify-between">
-                  <span>Produkto</span>
-                  <span>Halaga</span>
+                  <span>{t("productColumn")}</span>
+                  <span>{t("priceColumn")}</span>
                 </div>
                 <div className="space-y-1.5 font-mono text-[11px]">
                   {latestOrder.items?.map((item, idx) => {
@@ -1261,7 +1201,7 @@ export const CashierPOS = ({ embedded = false }) => {
                   </div>
                 )}
                 <div className="flex justify-between text-[12px] font-extrabold text-black pt-1.5 border-t border-dashed border-[#57534E]/10">
-                  <span>KABUUAN:</span>
+                  <span>{t("totalAmountLabel").toUpperCase()}</span>
                   <span className="text-sm text-[#064E3B]">
                     ₱{(latestOrder.total || 0).toFixed(2)}
                   </span>
@@ -1275,7 +1215,7 @@ export const CashierPOS = ({ embedded = false }) => {
                   </strong>
                 </div>
                 <div className="mt-1.5 text-[#064E3B] font-bold">
-                  Maraming salamat po!
+                  {t("thankYouMessage")}
                 </div>
               </div>
               <div className="pt-4 flex flex-col items-center justify-center text-center">
@@ -1310,7 +1250,7 @@ export const CashierPOS = ({ embedded = false }) => {
                     d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
                   />
                 </svg>
-                Print
+                {t("printReceiptButton")}
               </button>
               <button
                 onClick={() => {
@@ -1319,7 +1259,7 @@ export const CashierPOS = ({ embedded = false }) => {
                 }}
                 className="flex-1 py-2.5 bg-white hover:bg-[#FAFAF9] text-[#57534E] font-bold rounded-xl text-xs transition border border-[#57534E]/25 text-center flex items-center justify-center cursor-pointer"
               >
-                Bagong Order
+                {language === "fil" ? "Bagong Order" : "New Order"}
               </button>
             </div>
           </div>
@@ -1368,17 +1308,15 @@ const BarcodeScannerModal = ({
 }) => {
   const [scannerError, setScannerError] = useState("");
   const [hasCameraPermission, setHasCameraPermission] = useState(true);
-  const [isHttpsOrLocalhost, setIsHttpsOrLocalhost] = useState(true);
-
-  useEffect(() => {
-    // Check HTTPS or localhost
-    const isSecure =
+  const [isHttpsOrLocalhost] = useState(() => {
+    return (
       window.location.protocol === "https:" ||
       window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1";
+      window.location.hostname === "127.0.0.1"
+    );
+  });
 
-    setIsHttpsOrLocalhost(isSecure);
-
+  useEffect(() => {
     const html5QrCode = new Html5Qrcode("barcode-scanner-viewport");
     let isMounted = true;
 
@@ -1434,7 +1372,7 @@ const BarcodeScannerModal = ({
               );
             }
           },
-          (errorMessage) => {
+          () => {
             // Frame analysis fail (silent)
           },
         );
@@ -1464,6 +1402,7 @@ const BarcodeScannerModal = ({
           .catch((err) => console.error("Scanner clean stop error:", err));
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products, continuousScan]);
 
   return (

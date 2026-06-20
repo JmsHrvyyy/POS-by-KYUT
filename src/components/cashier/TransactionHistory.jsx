@@ -6,11 +6,15 @@ import { getOrdersByStore } from "../../services/orderService";
 import { db } from "../../config/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { getProductsByStore } from "../../services/productService";
+import { useLanguage } from "../../context/LanguageContext";
+
+const getAppLanguage = () => localStorage.getItem("app_language") || "fil";
 
 const formatDate = (timestamp) => {
   if (!timestamp) return "—";
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return date.toLocaleString("fil-PH", {
+  const lang = getAppLanguage();
+  return date.toLocaleString(lang === "fil" ? "fil-PH" : "en-US", {
     dateStyle: "medium",
     timeStyle: "short",
   });
@@ -19,7 +23,8 @@ const formatDate = (timestamp) => {
 const formatDateShort = (timestamp) => {
   if (!timestamp) return "—";
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return date.toLocaleDateString("fil-PH", {
+  const lang = getAppLanguage();
+  return date.toLocaleDateString(lang === "fil" ? "fil-PH" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -29,11 +34,13 @@ const formatDateShort = (timestamp) => {
 const formatTime = (timestamp) => {
   if (!timestamp) return "";
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return date.toLocaleTimeString("fil-PH", { timeStyle: "short" });
+  const lang = getAppLanguage();
+  return date.toLocaleTimeString(lang === "fil" ? "fil-PH" : "en-US", { timeStyle: "short" });
 };
 
 export const TransactionHistory = () => {
   const { activeStoreId } = useAuth();
+  const { t, language } = useLanguage();
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [storeCurrency, setStoreCurrency] = useState("₱");
@@ -169,7 +176,7 @@ export const TransactionHistory = () => {
 
     const printHtml = `
       <!DOCTYPE html>
-      <html lang="tl">
+      <html lang="${language}">
       <head>
         <meta charset="UTF-8" />
         <title>Resibo - ${order.id}</title>
@@ -183,7 +190,7 @@ export const TransactionHistory = () => {
         <div class="receipt">
           <div style="text-align:center;padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;">
             <div style="font-size:20px;font-weight:900;color:#064E3B;">POS-by-KYUT</div>
-            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#57534E;margin-top:4px;">Store Receipt</div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#57534E;margin-top:4px;">${t("receiptTitle")}</div>
             <div style="font-size:9px;color:#57534E;margin-top:8px;text-align:left;">
               <div>STORE ID: ${order.store_id}</div>
               <div>TXID: ${order.id}</div>
@@ -192,7 +199,7 @@ export const TransactionHistory = () => {
           </div>
           <div style="padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;">
             <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#57534E;margin-bottom:8px;">
-              <span>Produkto</span><span>Halaga</span>
+              <span>${t("productColumn")}</span><span>${t("priceColumn")}</span>
             </div>
             <div style="font-size:11px;">${itemsHtml}</div>
           </div>
@@ -203,22 +210,22 @@ export const TransactionHistory = () => {
             </div>
             ${discountHtml}
             <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;color:#0C0A09;padding-top:8px;border-top:1px dashed #ccc;margin-top:6px;">
-              <span>KABUUAN:</span>
+              <span>${t("totalAmountLabel").toUpperCase()}</span>
               <span style="color:#064E3B;">${storeCurrency}${order.total?.toFixed(2)}</span>
             </div>
           </div>
           <div style="text-align:center;font-size:9px;color:#57534E;padding-bottom:12px;border-bottom:1px dashed #aaa;margin-bottom:12px;">
             <div>Cashier: <strong>${order.cashier_name}</strong></div>
-            <div style="margin-top:6px;font-weight:700;color:#064E3B;">Maraming salamat po!</div>
+            <div style="margin-top:6px;font-weight:700;color:#064E3B;">${t("thankYouMessage")}</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:center;padding-top:8px;">
             <img src="${qrCodeUrl}" alt="QR Code" style="width:110px;height:110px;" />
-            <div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-top:6px;text-align:center;">I-scan para sa digital receipt</div>
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#aaa;margin-top:6px;text-align:center;">${t("scanForDigitalReceipt")}</div>
           </div>
         </div>
         <script>
           window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; };
-        </scr` + `ipt>
+        </script>
       </body>
       </html>
     `;
@@ -243,10 +250,10 @@ export const TransactionHistory = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
-                Kasaysayan ng mga Transaksyon
+                {language === "fil" ? "Kasaysayan ng mga Transaksyon" : "Transaction History"}
               </h1>
               <p className="text-white/60 text-sm mt-1 font-medium">
-                {activeStoreId ? `Store: ${activeStoreId}` : "Walang napiling tindahan"}
+                {activeStoreId ? `Store: ${activeStoreId}` : (language === "fil" ? "Walang napiling tindahan" : "No store selected")}
               </p>
             </div>
 
@@ -254,19 +261,19 @@ export const TransactionHistory = () => {
             <div className="flex gap-3 flex-wrap">
               <div className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-center min-w-[90px]">
                 <div className="text-xl font-extrabold">{totalTransactions}</div>
-                <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">Transaksyon</div>
+                <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">{language === "fil" ? "Transaksyon" : "Transactions"}</div>
               </div>
               <div className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-center min-w-[110px]">
                 <div className="text-xl font-extrabold">{storeCurrency}{totalRevenue.toFixed(2)}</div>
-                <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">Kabuuang Benta</div>
+                <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">{language === "fil" ? "Kabuuang Benta" : "Total Revenue"}</div>
               </div>
               <div className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-center min-w-[110px]">
                 <div className="text-xl font-extrabold">{storeCurrency}{totalProfit.toFixed(2)}</div>
-                <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">Kabuuang Kita</div>
+                <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">{language === "fil" ? "Kabuuang Kita" : "Total Profit"}</div>
               </div>
               <div className="bg-white/10 border border-white/10 rounded-xl px-4 py-2 text-center min-w-[90px]">
                 <div className="text-xl font-extrabold">{totalItems}</div>
-                <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">Mga Item</div>
+                <div className="text-[10px] text-white/60 uppercase font-bold tracking-wider">{language === "fil" ? "Mga Item" : "Total Items"}</div>
               </div>
             </div>
           </div>
@@ -285,7 +292,7 @@ export const TransactionHistory = () => {
             <input
               id="tx-search"
               type="text"
-              placeholder="Maghanap ng order ID, cashier, o produkto..."
+              placeholder={language === "fil" ? "Maghanap ng order ID, cashier, o produkto..." : "Search order ID, cashier, or product..."}
               className="w-full pl-9 pr-4 py-2.5 border border-[#57534E]/20 rounded-xl bg-white text-sm focus:outline-none focus:border-[#064E3B] focus:ring-1 focus:ring-[#064E3B]/20 text-[#0C0A09]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -295,10 +302,10 @@ export const TransactionHistory = () => {
           {/* Date filter tabs */}
           <div className="flex gap-1 bg-white border border-[#57534E]/15 rounded-xl p-1 shadow-sm">
             {[
-              { key: "all", label: "Lahat" },
-              { key: "today", label: "Ngayon" },
-              { key: "week", label: "Lingguhan" },
-              { key: "month", label: "Buwanan" },
+              { key: "all", label: t("all") },
+              { key: "today", label: language === "fil" ? "Ngayon" : "Today" },
+              { key: "week", label: language === "fil" ? "Lingguhan" : "Weekly" },
+              { key: "month", label: language === "fil" ? "Buwanan" : "Monthly" },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -323,10 +330,10 @@ export const TransactionHistory = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 2.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
               </svg>
             </div>
-            <h3 className="text-base font-bold text-[#0C0A09]">Pumili Muna ng Tindahan</h3>
-            <p className="text-sm text-[#57534E]/70 mt-1 max-w-xs">Kailangan munang pumili ng aktibong tindahan para makita ang mga transaksyon.</p>
+            <h3 className="text-base font-bold text-[#0C0A09]">{language === "fil" ? "Pumili Muna ng Tindahan" : "Select a Store First"}</h3>
+            <p className="text-sm text-[#57534E]/70 mt-1 max-w-xs">{language === "fil" ? "Kailangan munang pumili ng aktibong tindahan para makita ang mga transaksyon." : "An active store must be selected to view transaction history."}</p>
             <Link to="/stores" className="mt-4 px-5 py-2.5 bg-[#064E3B] text-white text-xs font-bold rounded-xl hover:bg-[#064E3B]/90 transition shadow-sm">
-              Pumunta sa Mga Tindahan
+              {language === "fil" ? "Pumunta sa Mga Tindahan" : "Go to Stores"}
             </Link>
           </div>
         )}
@@ -338,7 +345,7 @@ export const TransactionHistory = () => {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p className="text-sm text-[#57534E] font-semibold">Kinukuha ang mga transaksyon...</p>
+            <p className="text-sm text-[#57534E] font-semibold">{language === "fil" ? "Kinukuha ang mga transaksyon..." : "Fetching transaction list..."}</p>
           </div>
         )}
 
@@ -361,19 +368,21 @@ export const TransactionHistory = () => {
               </svg>
             </div>
             <h3 className="text-base font-bold text-[#0C0A09]">
-              {searchQuery || dateFilter !== "all" ? "Walang Nahanap" : "Wala Pang Transaksyon"}
+              {searchQuery || dateFilter !== "all" 
+                ? (language === "fil" ? "Walang Nahanap" : "No Results Found") 
+                : (language === "fil" ? "Wala Pang Transaksyon" : "No Transactions Yet")}
             </h3>
             <p className="text-sm text-[#57534E]/70 mt-1 max-w-xs">
               {searchQuery || dateFilter !== "all"
-                ? "Subukan ng ibang search o palitan ang date filter."
-                : "Mag-proseso ng bayad sa POS para lumabas ang mga transaksyon dito."}
+                ? (language === "fil" ? "Subukan ng ibang search o palitan ang date filter." : "Try another search query or clear the date filter.")
+                : (language === "fil" ? "Mag-proseso ng bayad sa POS para lumabas ang mga transaksyon dito." : "Process a sale on the POS screen to display transactions here.")}
             </p>
             {(searchQuery || dateFilter !== "all") && (
               <button
                 onClick={() => { setSearchQuery(""); setDateFilter("all"); }}
                 className="mt-4 px-4 py-2 border border-[#57534E]/20 text-[#57534E] text-xs font-bold rounded-xl hover:bg-[#57534E]/5 transition cursor-pointer"
               >
-                I-clear ang Filters
+                {language === "fil" ? "I-clear ang Filters" : "Clear Filters"}
               </button>
             )}
           </div>
@@ -387,7 +396,7 @@ export const TransactionHistory = () => {
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
-              {filteredOrders.length} resulta · Average order: {storeCurrency}{avgOrderValue.toFixed(2)}
+              {filteredOrders.length} {language === "fil" ? "resulta" : "results"} · Average order: {storeCurrency}{avgOrderValue.toFixed(2)}
             </div>
 
             {filteredOrders.map((order) => {
@@ -450,7 +459,7 @@ export const TransactionHistory = () => {
                         <span className="text-[#57534E]/40 mx-1.5">·</span>
                         <span>{itemCount} item{itemCount !== 1 ? "s" : ""}</span>
                         <span className="text-[#57534E]/40 mx-1.5">·</span>
-                        <span className="text-emerald-700 font-semibold">Kita: {storeCurrency}{displayProfit.toFixed(2)}</span>
+                        <span className="text-emerald-700 font-semibold">{language === "fil" ? "Kita:" : "Profit:"} {storeCurrency}{displayProfit.toFixed(2)}</span>
                       </div>
                     </div>
 
@@ -494,7 +503,7 @@ export const TransactionHistory = () => {
                         {/* Items list */}
                         <div>
                           <div className="text-[10px] font-bold uppercase tracking-wider text-[#57534E]/60 mb-2">
-                            Mga Biniling Produkto
+                            {language === "fil" ? "Mga Biniling Produkto" : "Purchased Products"}
                           </div>
                           <div className="space-y-2">
                             {order.items?.map((item, idx) => (
@@ -514,7 +523,7 @@ export const TransactionHistory = () => {
                         {/* Order summary */}
                         <div className="space-y-2 text-xs">
                           <div className="text-[10px] font-bold uppercase tracking-wider text-[#57534E]/60 mb-2">
-                            Buod ng Order
+                            {language === "fil" ? "Buod ng Order" : "Order Summary"}
                           </div>
                           <div className="flex justify-between text-[#57534E]">
                             <span>Subtotal:</span>
@@ -527,16 +536,16 @@ export const TransactionHistory = () => {
                             </div>
                           )}
                           <div className="flex justify-between font-extrabold text-[#0C0A09] pt-1.5 border-t border-dashed border-[#57534E]/20">
-                            <span>KABUUAN:</span>
+                            <span>{t("totalAmountLabel").toUpperCase()}</span>
                             <span className="text-[#064E3B]">{storeCurrency}{order.total?.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between font-bold text-emerald-700 mt-1">
-                            <span>KITA:</span>
+                            <span>{language === "fil" ? "KITA:" : "PROFIT:"}</span>
                             <span>{storeCurrency}{displayProfit.toFixed(2)}</span>
                           </div>
                           <div className="pt-2 mt-1 border-t border-[#57534E]/10 space-y-1 text-[#57534E]/70">
                             <div className="flex justify-between">
-                              <span>Paraan ng Bayad:</span>
+                              <span>{language === "fil" ? "Paraan ng Bayad:" : "Payment Method:"}</span>
                               <span className="font-bold text-[#0C0A09]">{order.payment_method || "Cash"}</span>
                             </div>
                             <div className="flex justify-between">
@@ -544,7 +553,7 @@ export const TransactionHistory = () => {
                               <span className="font-mono text-[10px] text-[#57534E]/60 truncate max-w-[140px]">{order.cashier_id}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span>Petsa:</span>
+                              <span>{language === "fil" ? "Petsa:" : "Date:"}</span>
                               <span className="font-bold text-[#0C0A09]">{formatDate(order.created_at)}</span>
                             </div>
                           </div>
