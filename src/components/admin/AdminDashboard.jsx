@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
+import { Html5Qrcode } from "html5-qrcode";
 import { Navbar } from "../shared/Navbar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -117,6 +118,34 @@ export const AdminDashboard = () => {
   const [selectedProduct, setSelectedProduct] = useState(null); // Lalagyan ng data ng piniling produkto
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isRestockOpen, setIsRestockOpen] = useState(false);
+
+  // Barcode Scanner states and handler
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannerTarget, setScannerTarget] = useState("add"); // "add" or "edit"
+
+  const handleScanSuccess = (decodedText) => {
+    if (scannerTarget === "add") {
+      setNewProduct((prev) => ({
+        ...prev,
+        barcode_sku: decodedText,
+      }));
+      showToast(
+        language === "fil"
+          ? `Na-scan ang barcode at nailagay sa form: "${decodedText}"`
+          : `Scanned barcode and filled into form: "${decodedText}"`
+      );
+    } else if (scannerTarget === "edit" && selectedProduct) {
+      setSelectedProduct((prev) => ({
+        ...prev,
+        barcode_sku: decodedText,
+      }));
+      showToast(
+        language === "fil"
+          ? `Na-scan ang barcode at nailagay sa form: "${decodedText}"`
+          : `Scanned barcode and filled into form: "${decodedText}"`
+      );
+    }
+  };
   const [restockAmount, setRestockAmount] = useState("");
 
   // ── Staff State ───────────────────────────────────────────────
@@ -890,7 +919,7 @@ export const AdminDashboard = () => {
         </header>
 
         {/* Main Tab Level Navigation */}
-        <div className="flex border-b border-[#57534E]/10 bg-[#FAFAF9]/60 px-4 pt-3 gap-1 mb-8 overflow-x-auto">
+        <div className="flex border-b border-[#57534E]/10 bg-[#FAFAF9]/60 px-4 pt-3 gap-1 mb-8 overflow-x-auto overflow-y-hidden scrollbar-none">
           {mainTabs.map((tab) => (
             <button
               key={tab.key}
@@ -1417,34 +1446,34 @@ export const AdminDashboard = () => {
                   }
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold mb-1">
-                    Kategorya
-                  </label>
+              <div>
+                <label className="block text-xs font-bold mb-1">
+                  Kategorya
+                </label>
+                <input
+                  type="text"
+                  required
+                  list="categories-list"
+                  className="w-full px-4 py-2 border border-stone-200 rounded-xl text-sm bg-white"
+                  value={newProduct.category}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, category: e.target.value })
+                  }
+                />
+                <datalist id="categories-list">
+                  {existingCategories.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1">
+                  Barcode / SKU
+                </label>
+                <div className="flex gap-2">
                   <input
                     type="text"
-                    required
-                    list="categories-list"
-                    className="w-full px-4 py-2 border rounded-xl text-sm bg-white"
-                    value={newProduct.category}
-                    onChange={(e) =>
-                      setNewProduct({ ...newProduct, category: e.target.value })
-                    }
-                  />
-                  <datalist id="categories-list">
-                    {existingCategories.map((c) => (
-                      <option key={c} value={c} />
-                    ))}
-                  </datalist>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold mb-1">
-                    Barcode / SKU
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border rounded-xl text-sm"
+                    className="flex-1 px-4 py-2 border border-stone-200 rounded-xl text-sm bg-white"
                     value={newProduct.barcode_sku}
                     onChange={(e) =>
                       setNewProduct({
@@ -1453,6 +1482,20 @@ export const AdminDashboard = () => {
                       })
                     }
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScannerTarget("add");
+                      setIsScannerOpen(true);
+                    }}
+                    className="px-3.5 py-2 bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer text-[#064E3B] transition"
+                    title="Scan barcode with camera"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-16v.01M4 12h2m0 0h2v-4m0 8h-2v4m14-8h-2V8m0 4h2v4" />
+                    </svg>
+                    {language === "fil" ? "I-scan" : "Scan"}
+                  </button>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -1655,38 +1698,40 @@ export const AdminDashboard = () => {
                 />
               </div>
 
-              {/* Category & Barcode */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold mb-1">
-                    Kategorya
-                  </label>
+              {/* Category */}
+              <div>
+                <label className="block text-xs font-bold mb-1">
+                  Kategorya
+                </label>
+                <input
+                  type="text"
+                  required
+                  list="edit-categories"
+                  className="w-full px-4 py-2 border border-stone-200 rounded-xl text-sm bg-white"
+                  value={selectedProduct.category}
+                  onChange={(e) =>
+                    setSelectedProduct({
+                      ...selectedProduct,
+                      category: e.target.value,
+                    })
+                  }
+                />
+                <datalist id="edit-categories">
+                  {existingCategories.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Barcode / SKU */}
+              <div>
+                <label className="block text-xs font-bold mb-1">
+                  Barcode / SKU
+                </label>
+                <div className="flex gap-2">
                   <input
                     type="text"
-                    required
-                    list="edit-categories"
-                    className="w-full px-4 py-2 border rounded-xl text-sm bg-white"
-                    value={selectedProduct.category}
-                    onChange={(e) =>
-                      setSelectedProduct({
-                        ...selectedProduct,
-                        category: e.target.value,
-                      })
-                    }
-                  />
-                  <datalist id="edit-categories">
-                    {existingCategories.map((c) => (
-                      <option key={c} value={c} />
-                    ))}
-                  </datalist>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold mb-1">
-                    Barcode / SKU
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border rounded-xl text-sm"
+                    className="flex-1 px-4 py-2 border border-stone-200 rounded-xl text-sm bg-white"
                     value={selectedProduct.barcode_sku}
                     onChange={(e) =>
                       setSelectedProduct({
@@ -1695,6 +1740,20 @@ export const AdminDashboard = () => {
                       })
                     }
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScannerTarget("edit");
+                      setIsScannerOpen(true);
+                    }}
+                    className="px-3.5 py-2 bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer text-[#064E3B] transition"
+                    title="Scan barcode with camera"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-16v.01M4 12h2m0 0h2v-4m0 8h-2v4m14-8h-2V8m0 4h2v4" />
+                    </svg>
+                    {language === "fil" ? "I-scan" : "Scan"}
+                  </button>
                 </div>
               </div>
 
@@ -1936,6 +1995,15 @@ export const AdminDashboard = () => {
         >
           {toast.message}
         </div>
+      )}
+
+      {/* BARCODE SCANNER MODAL */}
+      {isScannerOpen && (
+        <AdminBarcodeScannerModal
+          language={language}
+          onScanSuccess={handleScanSuccess}
+          onClose={() => setIsScannerOpen(false)}
+        />
       )}
     </div>
   );
@@ -2649,6 +2717,190 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── CAMERA BARCODE SCANNER COMPONENT FOR ADMIN FORMS ───
+const AdminBarcodeScannerModal = ({ onScanSuccess, onClose, language = "fil" }) => {
+  const [scannerError, setScannerError] = useState("");
+  const [hasCameraPermission, setHasCameraPermission] = useState(true);
+  const [isHttpsOrLocalhost] = useState(() => {
+    return (
+      window.location.protocol === "https:" ||
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    );
+  });
+
+  const playBeep = () => {
+    try {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtxClass) return;
+      const audioCtx = new AudioCtxClass();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); // High pitch beep
+      gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.08);
+    } catch (err) {
+      console.error("Audio beep failed:", err);
+    }
+  };
+
+  useEffect(() => {
+    const html5QrCode = new Html5Qrcode("admin-barcode-scanner-viewport");
+    let isMounted = true;
+
+    const startScanner = async () => {
+      try {
+        setScannerError("");
+        // Wait for element to render in DOM
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        if (!isMounted) return;
+
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 15,
+            qrbox: (width, height) => {
+              const boxWidth = Math.min(width * 0.85, 280);
+              const boxHeight = Math.min(height * 0.35, 100);
+              return {
+                x: (width - boxWidth) / 2,
+                y: (height - boxHeight) / 2,
+                width: boxWidth,
+                height: boxHeight,
+              };
+            },
+            aspectRatio: 1.333333,
+          },
+          (decodedText) => {
+            playBeep();
+            onScanSuccess(decodedText);
+            onClose();
+          },
+          () => {
+            // Frame analysis fail (silent)
+          }
+        );
+      } catch (err) {
+        console.error("Camera scan start error:", err);
+        if (isMounted) {
+          const errMsg = err?.message || String(err);
+          if (errMsg.includes("Permission") || errMsg.includes("NotAllowedError")) {
+            setHasCameraPermission(false);
+          } else {
+            setScannerError(
+              language === "fil"
+                ? "Hindi masimulan ang camera scanner."
+                : "Failed to initialize camera scanner."
+            );
+          }
+        }
+      }
+    };
+
+    if (isHttpsOrLocalhost) {
+      startScanner();
+    }
+
+    return () => {
+      isMounted = false;
+      if (html5QrCode.isScanning) {
+        html5QrCode.stop().catch((err) => console.error("Error stopping scanner:", err));
+      }
+    };
+  }, [isHttpsOrLocalhost, language]);
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#1C1917] rounded-2xl max-w-sm w-full p-5 border border-stone-200 dark:border-stone-800 shadow-2xl relative">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-extrabold text-sm text-[#064E3B] dark:text-emerald-400 uppercase tracking-wider">
+            {language === "fil" ? "I-scan ang Barcode" : "Scan Barcode"}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Viewport Area */}
+        <div className="relative bg-black aspect-square w-full flex items-center justify-center overflow-hidden rounded-xl border border-stone-200 dark:border-stone-800">
+          <div id="admin-barcode-scanner-viewport" className="w-full h-full"></div>
+
+          {/* Scanner boundary overlay helper */}
+          {hasCameraPermission && isHttpsOrLocalhost && !scannerError && (
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/40"></div>
+              <div className="relative w-[240px] h-[90px] border-2 border-dashed border-[#064E3B] dark:border-emerald-500 bg-transparent rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.4)] flex items-center justify-center">
+                <div className="absolute left-0 right-0 h-0.5 bg-rose-500 shadow-[0_0_8px_#f43f5e] animate-bounce"></div>
+                <div className="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-4 border-l-4 border-emerald-500 rounded-tl-sm"></div>
+                <div className="absolute -top-1 -right-1 w-3.5 h-3.5 border-t-4 border-r-4 border-emerald-500 rounded-tr-sm"></div>
+                <div className="absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-4 border-l-4 border-emerald-500 rounded-bl-sm"></div>
+                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-4 border-r-4 border-emerald-500 rounded-br-sm"></div>
+              </div>
+            </div>
+          )}
+
+          {/* Secure context check */}
+          {!isHttpsOrLocalhost && (
+            <div className="absolute inset-0 bg-stone-900/95 p-5 flex flex-col items-center justify-center text-center text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 text-amber-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m0-8v6m0 5h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-amber-400">Secure Origin Required</h4>
+              <p className="text-[10px] text-stone-300 mt-2 max-w-[200px] leading-relaxed">
+                {language === "fil"
+                  ? "Ang scanner ay gumagana lamang sa HTTPS o localhost."
+                  : "The scanner requires HTTPS or localhost connection."}
+              </p>
+            </div>
+          )}
+
+          {/* Camera Permission check */}
+          {!hasCameraPermission && isHttpsOrLocalhost && (
+            <div className="absolute inset-0 bg-stone-900/95 p-5 flex flex-col items-center justify-center text-center text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 text-rose-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-rose-400">Blocked Camera</h4>
+              <p className="text-[10px] text-stone-300 mt-2 max-w-[200px] leading-relaxed">
+                {language === "fil"
+                  ? "Paki-usap, payagan ang camera access sa iyong browser para makapag-scan."
+                  : "Please enable camera permission in your browser to scan."}
+              </p>
+            </div>
+          )}
+
+          {/* Initialization Error check */}
+          {scannerError && hasCameraPermission && isHttpsOrLocalhost && (
+            <div className="absolute inset-0 bg-stone-900/95 p-5 flex flex-col items-center justify-center text-center text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 text-rose-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h4 className="text-[11px] font-bold uppercase tracking-wider text-rose-400">Scanner Error</h4>
+              <p className="text-[10px] text-stone-300 mt-2 max-w-[200px] leading-relaxed">{scannerError}</p>
+            </div>
+          )}
+        </div>
+
+        <p className="text-[10px] text-stone-500 dark:text-stone-400 text-center mt-3 font-semibold">
+          {language === "fil"
+            ? "Igitna ang linear barcode sa loob ng guhit para mag-scan."
+            : "Center the linear barcode inside the target box to scan."}
+        </p>
       </div>
     </div>
   );

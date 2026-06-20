@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useLanguage } from "../../context/LanguageContext";
+import { ProfileWidget } from "./ProfileWidget";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { logout, userRole, activeStoreId, currentUser } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -68,7 +70,7 @@ export const Navbar = () => {
     <>
       {/* Top Header/Navigation Bar */}
       <nav className="bg-[#064E3B] backdrop-blur-md bg-opacity-95 text-white font-sans shadow-md w-full sticky top-0 z-40 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex items-center justify-between h-16">
             
             {/* Branding Logo */}
@@ -113,7 +115,10 @@ export const Navbar = () => {
               
               {/* User badge on Desktop */}
               {currentUser && (
-                <div className="hidden md:flex items-center space-x-2.5 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-xl text-xs">
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="hidden md:flex items-center space-x-2.5 bg-white/5 border border-white/10 hover:bg-white/10 px-3.5 py-1.5 rounded-xl text-xs cursor-pointer focus:outline-none transition animate-fadeIn"
+                >
                   <div className="w-6 h-6 rounded-full bg-[#57534E]/60 border border-white/20 flex items-center justify-center font-bold uppercase">
                     {currentUser.email ? currentUser.email.charAt(0) : "U"}
                   </div>
@@ -121,7 +126,7 @@ export const Navbar = () => {
                     <span className="font-bold max-w-[120px] truncate">{currentUser.email}</span>
                     <span className="text-[9px] text-[#F97316] uppercase font-bold tracking-wider">{userRole}</span>
                   </div>
-                </div>
+                </button>
               )}
 
               {/* Logout Button on Desktop */}
@@ -148,6 +153,9 @@ export const Navbar = () => {
             </div>
 
           </div>
+          {isProfileOpen && (
+            <ProfileWidget onClose={() => setIsProfileOpen(false)} />
+          )}
         </div>
       </nav>
 
@@ -214,7 +222,13 @@ export const Navbar = () => {
         {/* Drawer Footer / Profile & Logout */}
         <div className="p-6 border-t border-white/10 space-y-4">
           {currentUser && (
-            <div className="flex items-center space-x-3 bg-white/5 border border-white/10 p-3.5 rounded-xl text-xs">
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                setIsProfileOpen(true);
+              }}
+              className="w-full flex items-center space-x-3 bg-white/5 hover:bg-white/10 border border-white/10 p-3.5 rounded-xl text-xs text-left cursor-pointer transition focus:outline-none"
+            >
               <div className="w-8 h-8 rounded-full bg-[#57534E]/60 border border-white/20 flex items-center justify-center font-bold uppercase text-sm">
                 {currentUser.email ? currentUser.email.charAt(0) : "U"}
               </div>
@@ -222,7 +236,7 @@ export const Navbar = () => {
                 <span className="font-bold truncate">{currentUser.email}</span>
                 <span className="text-[9px] text-[#F97316] uppercase font-bold tracking-wider">{userRole}</span>
               </div>
-            </div>
+            </button>
           )}
 
           <button
