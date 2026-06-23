@@ -22,6 +22,7 @@ import {
 import { getProductsByStore, addProduct } from "../../services/productService";
 import { getOrdersByStore } from "../../services/orderService";
 import { updateStore } from "../../services/storeService";
+import { compressImageToBase64 } from "../../utils/imageHelper";
 import {
   ResponsiveContainer,
   LineChart,
@@ -113,6 +114,7 @@ export const AdminDashboard = () => {
   });
 
   const [imageFile, setImageFile] = useState(null);
+  const [editImageFile, setEditImageFile] = useState(null);
 
   // ── MGA BAGONG STATES PARA SA EDIT, RESTOCK, AT REMOVE ─────────
   const [selectedProduct, setSelectedProduct] = useState(null); // Lalagyan ng data ng piniling produkto
@@ -381,7 +383,14 @@ export const AdminDashboard = () => {
 
     try {
       setSavingProd(true);
-      let finalImageUrl = imageFile ? "pending_storage_upload_token" : "";
+      let finalImageUrl = "";
+      if (imageFile) {
+        try {
+          finalImageUrl = await compressImageToBase64(imageFile);
+        } catch (err) {
+          console.error("Error compressing image:", err);
+        }
+      }
 
       const productPayload = {
         name: newProduct.name.trim(),
@@ -473,6 +482,15 @@ export const AdminDashboard = () => {
       setSavingProd(true);
       const docRef = doc(db, "products", selectedProduct.id);
 
+      let finalImageUrl = selectedProduct.image_url || "";
+      if (editImageFile) {
+        try {
+          finalImageUrl = await compressImageToBase64(editImageFile);
+        } catch (err) {
+          console.error("Error compressing edit image:", err);
+        }
+      }
+
       const updatedData = {
         name: selectedProduct.name.trim(),
         category: selectedProduct.category.trim(),
@@ -480,6 +498,7 @@ export const AdminDashboard = () => {
         cost_price: parseFloat(selectedProduct.cost_price) || 0,
         selling_price: parseFloat(selectedProduct.selling_price) || 0,
         stock_quantity: parseInt(selectedProduct.stock_quantity, 10) || 0,
+        image_url: finalImageUrl,
       };
 
       await updateDoc(docRef, updatedData);
@@ -1122,7 +1141,8 @@ export const AdminDashboard = () => {
                                   </button>
                                   <button
                                     onClick={() => {
-                                      setSelectedProduct(p);
+                                      setSelectedProduct({ ...p });
+                                      setEditImageFile(null);
                                       setIsEditOpen(true);
                                     }}
                                     className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold rounded-lg text-[11px] transition cursor-pointer"
@@ -1678,6 +1698,7 @@ export const AdminDashboard = () => {
                 onClick={() => {
                   setIsEditOpen(false);
                   setSelectedProduct(null);
+                  setEditImageFile(null);
                 }}
                 className="text-stone-400"
               >
@@ -1821,6 +1842,61 @@ export const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* Product Image Section */}
+              <div className="pt-2">
+                <label className="block text-xs font-bold mb-1">
+                  Imahe ng Produkto (Product Image)
+                </label>
+                
+                {/* Current or selected image preview */}
+                {(selectedProduct.image_url || editImageFile) && (
+                  <div className="mb-3 flex items-center gap-4 p-3 bg-stone-50 rounded-xl border border-stone-200">
+                    <img
+                      src={editImageFile ? URL.createObjectURL(editImageFile) : selectedProduct.image_url}
+                      alt="Preview"
+                      className="w-16 h-16 object-cover rounded-lg border border-stone-200"
+                    />
+                    <div className="flex-1">
+                      <p className="text-xs text-stone-500 font-medium">
+                        {editImageFile ? "Bagong imahe ang napili" : "Kasalukuyang imahe ng produkto"}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (editImageFile) {
+                            setEditImageFile(null);
+                          } else {
+                            setSelectedProduct({
+                              ...selectedProduct,
+                              image_url: "",
+                            });
+                          }
+                        }}
+                        className="text-xs font-bold text-rose-600 hover:text-rose-800 transition mt-1 cursor-pointer"
+                      >
+                        Burahin ang Imahe
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="w-full text-xs"
+                  onChange={(e) => {
+                    if (e.target.files[0]) {
+                      const file = e.target.files[0];
+                      if (file.size > 2 * 1024 * 1024) {
+                        alert("Masyadong malaki ang imahe. Pumili ng file na mas mababa sa 2MB.");
+                        return;
+                      }
+                      setEditImageFile(file);
+                    }
+                  }}
+                />
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4 border-t border-stone-100">
                 <button
@@ -1828,15 +1904,16 @@ export const AdminDashboard = () => {
                   onClick={() => {
                     setIsEditOpen(false);
                     setSelectedProduct(null);
+                    setEditImageFile(null);
                   }}
-                  className="flex-1 py-2.5 border rounded-xl text-xs font-bold text-[#57534E]"
+                  className="flex-1 py-2.5 border rounded-xl text-xs font-bold text-[#57534E] cursor-pointer"
                 >
                   {t("cancelButton")}
                 </button>
                 <button
                   type="submit"
                   disabled={savingProd}
-                  className="flex-1 py-2.5 bg-[#064E3B] text-white rounded-xl text-xs font-bold"
+                  className="flex-1 py-2.5 bg-[#064E3B] text-white rounded-xl text-xs font-bold cursor-pointer"
                 >
                   {savingProd ? t("savingChangesButton") : t("saveChangesButton")}
                 </button>
