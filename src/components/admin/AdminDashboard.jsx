@@ -180,7 +180,7 @@ export const AdminDashboard = () => {
       setProducts(data);
     } catch (err) {
       console.error("fetchProducts:", err);
-      showToast("Hindi maikarga ang mga produkto.", "error");
+      showToast(t("errorLoadProducts"), "error");
     } finally {
       setLoadingProds(false);
     }
@@ -203,7 +203,7 @@ export const AdminDashboard = () => {
       setOrders(data);
     } catch (err) {
       console.error("fetchOrders:", err);
-      showToast("Hindi maikarga ang mga orders.", "error");
+      showToast(t("errorLoadOrders"), "error");
     } finally {
       setLoadingOrders(false);
     }
@@ -247,7 +247,7 @@ export const AdminDashboard = () => {
         if (storeDocSnap.exists()) {
           const data = storeDocSnap.data();
           setStoreDetails({
-            name: data.name || "Tindahan (Walang Pangalan)",
+            name: data.name || t("storeNoName"),
             industry_type: data.industry_type || "Retail",
             address: data.address || "",
             contact: data.contact || "",
@@ -265,7 +265,7 @@ export const AdminDashboard = () => {
       } catch (err) {
         console.error("Error fetching store details:", err);
         setStoreDetails({
-          name: "Error sa Pag-load",
+          name: t("errorLoadStore"),
           industry_type: "Retail",
           address: "",
           contact: "",
@@ -334,7 +334,7 @@ export const AdminDashboard = () => {
       const file = e.target.files[0];
       if (file.size > 2 * 1024 * 1024) {
         setProdError(
-          "Masyadong malaki ang imahe. Pumili ng file na mas mababa sa 2MB.",
+          t("imageTooLarge"),
         );
         return;
       }
@@ -350,11 +350,11 @@ export const AdminDashboard = () => {
     setProdSuccess("");
 
     if (!newProduct.name.trim()) {
-      setProdError("Kinakailangan ang pangalan ng produkto.");
+      setProdError(t("productNameRequired"));
       return;
     }
     if (!newProduct.category.trim()) {
-      setProdError("Mangyaring maglagay o pumili ng kategorya.");
+      setProdError(t("categoryRequired"));
       return;
     }
 
@@ -363,19 +363,19 @@ export const AdminDashboard = () => {
     const stockQty = parseInt(newProduct.stock_quantity, 10);
 
     if (isNaN(sellingPrice) || sellingPrice <= 0) {
-      setProdError("Maglagay ng valid na benta (selling price).");
+      setProdError(t("invalidSellingPrice"));
       return;
     }
     if (isNaN(costPrice) || costPrice < 0) {
-      setProdError("Maglagay ng valid na puhunan (cost price).");
+      setProdError(t("invalidCostPrice"));
       return;
     }
     if (sellingPrice < costPrice) {
-      setProdError("Ang presyo ng benta ay hindi dapat mas mababa sa puhunan.");
+      setProdError(t("sellingPriceLessThanCost"));
       return;
     }
     if (isNaN(stockQty) || stockQty < 0) {
-      setProdError("Maglagay ng valid na stock quantity.");
+      setProdError(t("invalidStockQty"));
       return;
     }
 
@@ -395,7 +395,7 @@ export const AdminDashboard = () => {
 
       const created = await addProduct(productPayload, activeStoreId);
       setProducts((prev) => [...prev, created]);
-      showToast("Matagumpay na naidagdag ang produkto!");
+      showToast(t("successAddProduct"));
 
       setNewProduct({
         name: "",
@@ -410,7 +410,7 @@ export const AdminDashboard = () => {
       setIsAddProdOpen(false);
     } catch (err) {
       console.error(err);
-      setProdError("May naganap na error sa pag-save.");
+      setProdError(t("errorAddProduct"));
     } finally {
       setSavingProd(false);
     }
@@ -421,7 +421,7 @@ export const AdminDashboard = () => {
     e.preventDefault();
     const addedStock = parseInt(restockAmount, 10);
     if (isNaN(addedStock) || addedStock <= 0) {
-      alert("Mangyaring maglagay ng bilang na mas mataas sa 0.");
+      alert(t("invalidRestockAmount"));
       return;
     }
 
@@ -443,13 +443,13 @@ export const AdminDashboard = () => {
       );
 
       showToast(
-        `Matagumpay na nadagdagan ng +${addedStock} stocks si ${selectedProduct.name}!`,
+        t("successRestock", { count: addedStock, name: selectedProduct.name })
       );
       setIsRestockOpen(false);
       setRestockAmount("");
     } catch (err) {
       console.error(err);
-      showToast("Hindi ma-save ang restock stock.", "error");
+      showToast(t("errorRestock"), "error");
     } finally {
       setSavingProd(false);
     }
@@ -459,13 +459,13 @@ export const AdminDashboard = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!selectedProduct.name.trim() || !selectedProduct.category.trim()) {
-      alert("Huwag iwanang blanko ang pangalan at kategorya.");
+      alert(t("invalidEditProductBlank"));
       return;
     }
     const costPrice = parseFloat(selectedProduct.cost_price) || 0;
     const sellingPrice = parseFloat(selectedProduct.selling_price) || 0;
     if (sellingPrice < costPrice) {
-      alert("Ang presyo ng benta ay hindi dapat mas mababa sa puhunan.");
+      alert(t("sellingPriceLessThanCost"));
       return;
     }
 
@@ -491,11 +491,11 @@ export const AdminDashboard = () => {
         ),
       );
 
-      showToast("Na-update nang matagumpay ang mga detalye!");
+      showToast(t("successEditProduct"));
       setIsEditOpen(false);
     } catch (err) {
       console.error(err);
-      showToast("Nagka-error sa pag-edit.", "error");
+      showToast(t("errorEditProduct"), "error");
     } finally {
       setSavingProd(false);
     }
@@ -504,7 +504,7 @@ export const AdminDashboard = () => {
   // LOHIKA: Pagbura ng Produkto sa Firestore Database
   const handleDeleteProduct = async (product) => {
     const seguro = window.confirm(
-      `Sigurado ka bang nais mong tuluyang burahin si "${product.name}" sa imbentaryo? Hindi na ito mababawi.`,
+      t("confirmDeleteProductFully", { name: product.name })
     );
     if (!seguro) return;
 
@@ -514,10 +514,10 @@ export const AdminDashboard = () => {
 
       // Alisin sa screen filter array
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
-      showToast(`Tinanggal na si ${product.name} sa system.`);
+      showToast(t("successDeleteProductMsg", { name: product.name }));
     } catch (err) {
       console.error(err);
-      showToast("Hindi nabura ang produkto.", "error");
+      showToast(t("errorDeleteProductMsg"), "error");
     }
   };
 
@@ -527,7 +527,7 @@ export const AdminDashboard = () => {
     setStaffError("");
     setStaffSuccess("");
     if (!staffEmail.trim()) {
-      setStaffError("Kinakailangan ang email ng staff.");
+      setStaffError(t("staffEmailRequired"));
       return;
     }
     if (isMockStore(activeStoreId)) {
@@ -540,15 +540,17 @@ export const AdminDashboard = () => {
           status: "Active",
         },
       ]);
-      showToast("Naidagdag ang staff (Mock Mode)!");
+      showToast(t("successAddStaffMock"));
       setIsAddStaffOpen(false);
 
       const signupLink = `${window.location.origin}/signup`;
       setInvitationInfo({
         email: staffEmail.trim(),
         exists: false,
-        subject: "Imbitasyon sa POS-by-KYUT (Demo)",
-        body: `Kamusta!\n\nInaanyayahan ka naming maging staff para sa aming tindahan (Store ID: ${activeStoreId}).\n\nDahil wala ka pang account sa aming system, mangyaring gumawa muna ng account bilang Staff/Cashier gamit ang link na ito:\n${signupLink}\n\nGamitin ang email na ito sa pag-signup para ma-link ang iyong account sa aming tindahan.\n\nSalamat!`,
+        subject: language === "fil" ? "Imbitasyon sa POS-by-KYUT (Demo)" : "Invitation to POS-by-KYUT (Demo)",
+        body: language === "fil"
+          ? `Kamusta!\n\nInaanyayahan ka naming maging staff para sa aming tindahan (Store ID: ${activeStoreId}).\n\nDahil wala ka pang account sa aming system, mangyaring gumawa muna ng account bilang Staff/Cashier gamit ang link na ito:\n${signupLink}\n\nGamitin ang email na ito sa pag-signup para ma-link ang iyong account sa aming tindahan.\n\nSalamat!`
+          : `Hello!\n\nYou are invited to be a staff member for our store (Store ID: ${activeStoreId}).\n\nSince you do not have an account in our system yet, please create a Staff/Cashier account using this link:\n${signupLink}\n\nMake sure to use this email to sign up to link your account to our store.\n\nThank you!`,
       });
       setStaffEmail("");
       return;
@@ -566,7 +568,7 @@ export const AdminDashboard = () => {
       );
       if (!dupeSnap.empty) {
         setStaffError(
-          "Ang staff na ito ay nakatalaga na rito (o may pending invite).",
+          t("errorStaffAssigned")
         );
         return;
       }
@@ -598,13 +600,15 @@ export const AdminDashboard = () => {
           created_at: serverTimestamp(),
         };
 
-        emailSubject = "Imbitasyon sa POS-by-KYUT";
-        signupInstructions = `Kamusta!\n\nInaanyayahan ka naming maging staff para sa aming tindahan (Store ID: ${activeStoreId}).\n\nDahil wala ka pang account sa aming system, mangyaring gumawa muna ng account bilang Staff/Cashier gamit ang link na ito:\n${window.location.origin}/signup\n\nSiguraduhing gamitin ang email na ito sa pag-signup para ma-link ang iyong account sa aming tindahan.\n\nSalamat!`;
+        emailSubject = language === "fil" ? "Imbitasyon sa POS-by-KYUT" : "Invitation to POS-by-KYUT";
+        signupInstructions = language === "fil"
+          ? `Kamusta!\n\nInaanyayahan ka naming maging staff para sa aming tindahan (Store ID: ${activeStoreId}).\n\nDahil wala ka pang account sa aming system, mangyaring gumawa muna ng account bilang Staff/Cashier gamit ang link na ito:\n${window.location.origin}/signup\n\nSiguraduhing gamitin ang email na ito sa pag-signup para ma-link ang iyong account sa aming tindahan.\n\nSalamat!`
+          : `Hello!\n\nYou are invited to be a staff member for our store (Store ID: ${activeStoreId}).\n\nSince you do not have an account in our system yet, please create a Staff/Cashier account using this link:\n${window.location.origin}/signup\n\nMake sure to use this email to sign up to link your account to our store.\n\nThank you!`;
       } else {
         // User exists
         if (foundUser.global_role !== "staff") {
           setStaffError(
-            "Ang account na ito ay rehistrado pero hindi Staff (Manager/Owner ito).",
+            t("errorStaffRoleNotStaff")
           );
           return;
         }
@@ -620,8 +624,10 @@ export const AdminDashboard = () => {
           created_at: serverTimestamp(),
         };
 
-        emailSubject = "Itinalaga ka bilang Staff sa POS-by-KYUT";
-        signupInstructions = `Kamusta!\n\nItinalaga ka na bilang staff para sa aming tindahan (Store ID: ${activeStoreId}).\n\nMangyaring mag-login sa iyong account dito para simulan ang paggamit ng POS:\n${window.location.origin}/login\n\nSalamat!`;
+        emailSubject = language === "fil" ? "Itinalaga ka bilang Staff sa POS-by-KYUT" : "You have been assigned as Staff in POS-by-KYUT";
+        signupInstructions = language === "fil"
+          ? `Kamusta!\n\nItinalaga ka na bilang staff para sa aming tindahan (Store ID: ${activeStoreId}).\n\nMangyaring mag-login sa iyong account dito para simulan ang paggamit ng POS:\n${window.location.origin}/login\n\nSalamat!`
+          : `Hello!\n\nYou have been assigned as staff for our store (Store ID: ${activeStoreId}).\n\nPlease log in to your account here to start using the POS:\n${window.location.origin}/login\n\nThank you!`;
       }
 
       const docRef = await addDoc(collection(db, "store_staff"), staffPayload);
@@ -634,7 +640,7 @@ export const AdminDashboard = () => {
         },
       ]);
 
-      showToast(`Matagumpay na naidagdag si ${staffPayload.name}!`);
+      showToast(language === "fil" ? `Matagumpay na naidagdag si ${staffPayload.name}!` : `Staff member ${staffPayload.name} added successfully!`);
       setIsAddStaffOpen(false);
 
       // Display the instructions modal to copy / send email
@@ -648,7 +654,7 @@ export const AdminDashboard = () => {
       setStaffEmail("");
     } catch (err) {
       console.error(err);
-      setStaffError("May naganap na error habang nagdadagdag ng staff.");
+      setStaffError(t("errorAddStaff"));
     } finally {
       setSavingStaff(false);
     }
@@ -662,7 +668,7 @@ export const AdminDashboard = () => {
           s.email === staff.email ? { ...s, role: newRole } : s,
         ),
       );
-      showToast(`Role ng staff na si ${staff.name} ay binago sa ${newRole}!`);
+      showToast(t("successUpdateStaffRoleMsg", { name: staff.name, role: newRole }));
       return;
     }
 
@@ -672,23 +678,23 @@ export const AdminDashboard = () => {
       setStaffList((prev) =>
         prev.map((s) => (s.id === staff.id ? { ...s, role: newRole } : s)),
       );
-      showToast(`Role ng staff na si ${staff.name} ay binago sa ${newRole}!`);
+      showToast(t("successUpdateStaffRoleMsg", { name: staff.name, role: newRole }));
     } catch (err) {
       console.error("handleUpdateStaffRole error:", err);
-      showToast("Hindi ma-update ang role ng staff.", "error");
+      showToast(t("errorUpdateRole"), "error");
     }
   };
 
   const handleRemoveStaff = async (staff) => {
     const seguro = window.confirm(
-      `Sigurado ka bang nais mong tanggalin si "${staff.name}" mula sa tindahang ito? Hindi sila makaka-access na pagkatapos.`,
+      t("confirmRemoveStaffMsg", { name: staff.name })
     );
     if (!seguro) return;
 
     try {
       if (isMockStore(activeStoreId)) {
         setStaffList((prev) => prev.filter((s) => s.id !== staff.id));
-        showToast(`Tinanggal na si ${staff.name} mula sa staff!`);
+        showToast(t("successRemoveStaffMsg", { name: staff.name }));
         setStaffMenuOpen(null);
         return;
       }
@@ -696,11 +702,11 @@ export const AdminDashboard = () => {
       const docRef = doc(db, "store_staff", staff.id);
       await deleteDoc(docRef);
       setStaffList((prev) => prev.filter((s) => s.id !== staff.id));
-      showToast(`Tinanggal na si ${staff.name} mula sa staff!`);
+      showToast(t("successRemoveStaffMsg", { name: staff.name }));
       setStaffMenuOpen(null);
     } catch (err) {
       console.error("handleRemoveStaff:", err);
-      showToast("Hindi matanggal ang staff.", "error");
+      showToast(t("errorRemoveStaff"), "error");
     }
   };
 
@@ -711,20 +717,20 @@ export const AdminDashboard = () => {
 
   const stats = [
     {
-      name: "Mga Produkto",
-      value: `${products.length} items`,
-      sub: `${lowStockCount} kailangang i-restock`,
+      name: t("productsStat"),
+      value: language === "fil" ? `${products.length} aytem` : `${products.length} items`,
+      sub: t("needRestock", { count: lowStockCount }),
       colorClass: "text-[#F97316] bg-[#F97316]/10",
     },
     {
-      name: "Staff sa Branch",
-      value: `${staffList.length} katao`,
-      sub: `${activeStaffCount} aktibo ngayon`,
+      name: t("staffInBranch"),
+      value: t("peopleCount", { count: staffList.length }),
+      sub: t("activeNow", { count: activeStaffCount }),
       colorClass: "text-[#57534E] bg-[#57534E]/10",
     },
     // Stats Card Configuration
     {
-      name: "Pangalan ng Tindahan",
+      name: t("storeNameLabel"),
       value: storeDetails.name, // Ipapakita ang totoong pangalan ng branch o tindahan
       sub: isMockStore(activeStoreId)
         ? "Demo Mode"
@@ -894,7 +900,7 @@ export const AdminDashboard = () => {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p className="text-xs text-[#57534E]">Kinakarga...</p>
+            <p className="text-xs text-[#57534E]">{t("loadingText")}</p>
           </div>
         </div>
       )}
@@ -907,7 +913,9 @@ export const AdminDashboard = () => {
               Admin Operations Dashboard
             </h1>
             <p className="text-sm text-[#57534E] mt-1">
-              Kontrolado mo ang imbentaryo, pag-restock, at cashier access rito.
+              {language === "fil"
+                ? "Kontrolado mo ang imbentaryo, pag-restock, at cashier access rito."
+                : "Control your store's inventory, restock items, and cashier access here."}
             </p>
           </div>
           {activeStoreId && (
@@ -987,10 +995,10 @@ export const AdminDashboard = () => {
                   <div className="flex justify-between items-center mb-6">
                     <div>
                       <h3 className="text-lg font-bold text-[#064E3B]">
-                        Imbentaryo View
+                        {t("inventoryView")}
                       </h3>
                       <p className="text-xs text-[#57534E]">
-                        Monitor ng kasalukuyang bilang ng paninda.
+                        {t("inventoryViewDesc")}
                       </p>
                     </div>
                     {activeStoreId && (
@@ -998,26 +1006,26 @@ export const AdminDashboard = () => {
                         onClick={() => setIsAddProdOpen(true)}
                         className="px-3.5 py-2 bg-[#064E3B] text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer"
                       >
-                        + Bagong Produkto
+                        {t("newProductButton")}
                       </button>
                     )}
                   </div>
 
                   {loadingProds ? (
-                    <div className="text-center py-10 text-xs">Ikinakarga...</div>
+                    <div className="text-center py-10 text-xs">{t("loadingText")}</div>
                   ) : products.length === 0 ? (
                     <div className="text-center py-12 text-xs text-[#57534E]">
-                      Walang produkto.
+                      {t("noProductsText")}
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs">
                         <thead>
                           <tr className="border-b border-[#57534E]/10 text-[#57534E] uppercase text-[10px]">
-                            <th className="pb-3">Pangalan</th>
-                            <th className="pb-3">Kategorya</th>
-                            <th className="pb-3">Presyo</th>
-                            <th className="pb-3 text-right">Dami ng Stock</th>
+                            <th className="pb-3">{t("nameColumn")}</th>
+                            <th className="pb-3">{t("categoryColumn")}</th>
+                            <th className="pb-3">{t("priceColumn")}</th>
+                            <th className="pb-3 text-right">{t("stockQtyColumn")}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#57534E]/5">
@@ -1031,7 +1039,7 @@ export const AdminDashboard = () => {
                                 {storeDetails.currency || "₱"}{p.selling_price?.toFixed(2)}
                               </td>
                               <td className="py-3.5 text-right font-bold">
-                                {p.stock_quantity} units
+                                {p.stock_quantity} {t("units")}
                               </td>
                             </tr>
                           ))}
@@ -1047,29 +1055,29 @@ export const AdminDashboard = () => {
                 <div className="p-6">
                   <div>
                     <h3 className="text-lg font-bold text-[#064E3B]">
-                      Pamamahala at Pag-update
+                      {t("manageAndUpdate")}
                     </h3>
                     <p className="text-xs text-[#57534E] mb-6">
-                      Dito ka magre-restock, mag-e-edit ng detalye, o magbubura ng aytem.
+                      {t("manageAndUpdateDesc")}
                     </p>
                   </div>
 
                   {loadingProds ? (
-                    <div className="text-center py-10 text-xs">Ikinakarga...</div>
+                    <div className="text-center py-10 text-xs">{t("loadingText")}</div>
                   ) : products.length === 0 ? (
                     <div className="text-center py-12 text-xs text-[#57534E]">
-                      Walang produkto na pwedeng i-modify.
+                      {t("noProductsToModify")}
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
                           <tr className="border-b border-[#57534E]/10 text-[#57534E] uppercase text-[10px] tracking-wider">
-                            <th className="pb-3 font-bold">Produkto</th>
-                            <th className="pb-3 font-bold">Puhunan / Benta</th>
-                            <th className="pb-3 font-bold">Kasalukuyang Stock</th>
+                            <th className="pb-3 font-bold">{t("productColumn")}</th>
+                            <th className="pb-3 font-bold">{t("costSellingColumn")}</th>
+                            <th className="pb-3 font-bold">{t("currentStockColumn")}</th>
                             <th className="pb-3 font-bold text-center">
-                              Mga Aksyon
+                              {t("actionsColumn")}
                             </th>
                           </tr>
                         </thead>
@@ -1093,11 +1101,11 @@ export const AdminDashboard = () => {
                               <td className="py-4 font-mono font-bold">
                                 {p.stock_quantity <= 10 ? (
                                   <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded-md text-[11px]">
-                                    Mababa ({p.stock_quantity})
+                                    {t("lowStockLabel", { stock: p.stock_quantity })}
                                   </span>
                                 ) : (
                                   <span className="text-[#57534E]">
-                                    {p.stock_quantity} units
+                                    {p.stock_quantity} {t("units")}
                                   </span>
                                 )}
                               </td>
@@ -1110,7 +1118,7 @@ export const AdminDashboard = () => {
                                     }}
                                     className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#064E3B] font-bold rounded-lg text-[11px] transition cursor-pointer"
                                   >
-                                    Restock
+                                    {t("restockButton")}
                                   </button>
                                   <button
                                     onClick={() => {
@@ -1119,13 +1127,13 @@ export const AdminDashboard = () => {
                                     }}
                                     className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold rounded-lg text-[11px] transition cursor-pointer"
                                   >
-                                    Edit
+                                    {t("editButton")}
                                   </button>
                                   <button
                                     onClick={() => handleDeleteProduct(p)}
                                     className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg text-[11px] transition cursor-pointer"
                                   >
-                                    Burahin
+                                    {t("deleteButton")}
                                   </button>
                                 </div>
                               </td>
@@ -1144,28 +1152,28 @@ export const AdminDashboard = () => {
                   <div className="flex justify-between items-center mb-6">
                     <div>
                       <h3 className="text-lg font-bold text-[#064E3B]">
-                        Mga Staff
+                        {t("staffTitle")}
                       </h3>
                       <p className="text-xs text-[#57534E]">
-                        Cashiers na pwedeng pumasok sa branch na ito.
+                        {t("staffDesc")}
                       </p>
                     </div>
                     <button
                       onClick={() => setIsAddStaffOpen(true)}
                       className="px-3.5 py-2 bg-[#064E3B] text-white font-bold rounded-xl text-xs cursor-pointer"
                     >
-                      + Bagong Staff
+                      {t("newStaffButton")}
                     </button>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
                       <thead>
                         <tr className="border-b border-[#57534E]/10 text-[#57534E] uppercase text-[10px]">
-                          <th className="pb-3">Pangalan</th>
-                          <th className="pb-3">Role</th>
-                          <th className="pb-3">Email</th>
-                          <th className="pb-3">Status</th>
-                          <th className="pb-3 text-center">Aksyon</th>
+                          <th className="pb-3">{t("nameColumn")}</th>
+                          <th className="pb-3">{t("roleColumn")}</th>
+                          <th className="pb-3">{t("emailColumn")}</th>
+                          <th className="pb-3">{t("statusColumn")}</th>
+                          <th className="pb-3 text-center">{t("actionColumn")}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#57534E]/5">
@@ -1216,7 +1224,7 @@ export const AdminDashboard = () => {
                                       onClick={() => handleRemoveStaff(s)}
                                       className="w-full text-left px-4 py-2 text-rose-700 hover:bg-rose-50 text-xs font-bold rounded-lg transition"
                                     >
-                                      Tanggalin
+                                      {t("removeButton")}
                                     </button>
                                   </div>
                                 )}
@@ -1417,7 +1425,7 @@ export const AdminDashboard = () => {
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-[#57534E]/10">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-[#064E3B]">
-                Magdagdag ng Produkto
+                {t("addProductTitle")}
               </h2>
               <button
                 onClick={() => setIsAddProdOpen(false)}
@@ -1434,7 +1442,7 @@ export const AdminDashboard = () => {
             <form onSubmit={handleAddProduct} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold mb-1">
-                  Pangalan ng Produkto
+                  {t("productNameLabel")}
                 </label>
                 <input
                   type="text"
@@ -1448,7 +1456,7 @@ export const AdminDashboard = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold mb-1">
-                  Kategorya
+                  {t("categoryLabel")}
                 </label>
                 <input
                   type="text"
@@ -1468,7 +1476,7 @@ export const AdminDashboard = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold mb-1">
-                  Barcode / SKU
+                  {t("barcodeLabel")}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -1494,14 +1502,14 @@ export const AdminDashboard = () => {
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-16v.01M4 12h2m0 0h2v-4m0 8h-2v4m14-8h-2V8m0 4h2v4" />
                     </svg>
-                    {language === "fil" ? "I-scan" : "Scan"}
+                    {t("scanLabel")}
                   </button>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold mb-1">
-                    Puhunan ({storeDetails.currency || "₱"})
+                    {t("costPriceLabel")} ({storeDetails.currency || "₱"})
                   </label>
                   <input
                     type="number"
@@ -1519,7 +1527,7 @@ export const AdminDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold mb-1">
-                    Benta ({storeDetails.currency || "₱"})
+                    {t("sellingPriceLabel")} ({storeDetails.currency || "₱"})
                   </label>
                   <input
                     type="number"
@@ -1537,7 +1545,7 @@ export const AdminDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold mb-1">
-                    Dami (Stock)
+                    {t("stockQtyLabel")}
                   </label>
                   <input
                     type="number"
@@ -1555,7 +1563,7 @@ export const AdminDashboard = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold mb-1">
-                  Imahe ng Produkto (Attachment)
+                  {t("productImageLabel")}
                 </label>
                 <input
                   type="file"
@@ -1565,7 +1573,7 @@ export const AdminDashboard = () => {
                 />
                 {imageFile && (
                   <p className="text-xs text-emerald-700 mt-1">
-                    ✓ Attached: {imageFile.name}
+                    {t("attachedFile")} {imageFile.name}
                   </p>
                 )}
               </div>
@@ -1575,28 +1583,27 @@ export const AdminDashboard = () => {
                   onClick={() => setIsAddProdOpen(false)}
                   className="flex-1 py-2.5 border rounded-xl text-xs font-bold text-[#57534E]"
                 >
-                  Kanselahin
+                  {t("cancelButton")}
                 </button>
                 <button
                   type="submit"
                   disabled={savingProd}
                   className="flex-1 py-2.5 bg-[#064E3B] text-white rounded-xl text-xs font-bold"
                 >
-                  {savingProd ? "Ipinapasok..." : "Likhain"}
+                  {savingProd ? t("creatingProductButton") : t("createProductButton")}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* ── MODAL FOR RESTOCK ACTION ── */}
+           {/* ── MODAL FOR RESTOCK ACTION ── */}
       {isRestockOpen && selectedProduct && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-[#57534E]/10">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-md font-bold text-[#064E3B]">
-                Mag-restock ng Imbentaryo
+                {t("restockTitle")}
               </h2>
               <button
                 onClick={() => {
@@ -1610,25 +1617,25 @@ export const AdminDashboard = () => {
             </div>
 
             <p className="text-xs text-stone-600 mb-3">
-              Produkto:{" "}
+              {language === "fil" ? "Produkto:" : "Product:"}{" "}
               <strong className="text-stone-900">{selectedProduct.name}</strong>
               <br />
-              Kasalukuyang laman:{" "}
+              {t("currentQuantityLabel")}{" "}
               <strong className="text-stone-900">
-                {selectedProduct.stock_quantity} units
+                {selectedProduct.stock_quantity} {t("units")}
               </strong>
             </p>
 
             <form onSubmit={handleRestockSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider text-stone-500">
-                  Ilang piraso ang idadagdag?
+                  {t("addAmountLabel")}
                 </label>
                 <input
                   type="number"
                   required
                   min="1"
-                  placeholder="Halimbawa: 50"
+                  placeholder={t("restockPlaceholder")}
                   className="w-full px-4 py-2.5 border border-stone-200 rounded-xl focus:outline-none focus:border-[#064E3B] text-sm font-mono"
                   value={restockAmount}
                   onChange={(e) => setRestockAmount(e.target.value)}
@@ -1644,14 +1651,14 @@ export const AdminDashboard = () => {
                   }}
                   className="flex-1 py-2.5 border rounded-xl text-xs font-bold text-[#57534E]"
                 >
-                  Kanselahin
+                  {t("cancelButton")}
                 </button>
                 <button
                   type="submit"
                   disabled={savingProd}
                   className="flex-1 py-2.5 bg-[#064E3B] text-white rounded-xl text-xs font-bold"
                 >
-                  {savingProd ? "Ina-update..." : "I-save Stock"}
+                  {savingProd ? t("updatingButton") : t("saveStockButton")}
                 </button>
               </div>
             </form>
@@ -1665,7 +1672,7 @@ export const AdminDashboard = () => {
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200 my-8">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-bold text-[#064E3B]">
-                I-edit ang Detalye ng Produkto
+                {t("editProductTitle")}
               </h2>
               <button
                 onClick={() => {
@@ -1682,7 +1689,7 @@ export const AdminDashboard = () => {
               {/* Product Name */}
               <div>
                 <label className="block text-xs font-bold mb-1">
-                  Pangalan ng Produkto
+                  {t("productNameLabel")}
                 </label>
                 <input
                   type="text"
@@ -1701,7 +1708,7 @@ export const AdminDashboard = () => {
               {/* Category */}
               <div>
                 <label className="block text-xs font-bold mb-1">
-                  Kategorya
+                  {t("categoryLabel")}
                 </label>
                 <input
                   type="text"
@@ -1726,7 +1733,7 @@ export const AdminDashboard = () => {
               {/* Barcode / SKU */}
               <div>
                 <label className="block text-xs font-bold mb-1">
-                  Barcode / SKU
+                  {t("barcodeLabel")}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -1752,7 +1759,7 @@ export const AdminDashboard = () => {
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-16v.01M4 12h2m0 0h2v-4m0 8h-2v4m14-8h-2V8m0 4h2v4" />
                     </svg>
-                    {language === "fil" ? "I-scan" : "Scan"}
+                    {t("scanLabel")}
                   </button>
                 </div>
               </div>
@@ -1761,7 +1768,7 @@ export const AdminDashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold mb-1">
-                    Puhunan ({storeDetails.currency || "₱"})
+                    {t("costPriceLabel")} ({storeDetails.currency || "₱"})
                   </label>
                   <input
                     type="number"
@@ -1779,7 +1786,7 @@ export const AdminDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold mb-1">
-                    Benta ({storeDetails.currency || "₱"})
+                    {t("sellingPriceLabel")} ({storeDetails.currency || "₱"})
                   </label>
                   <input
                     type="number"
@@ -1797,7 +1804,7 @@ export const AdminDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-bold mb-1">
-                    Dami (Stock Qty)
+                    {t("stockQtyLabel")}
                   </label>
                   <input
                     type="number"
@@ -1824,14 +1831,14 @@ export const AdminDashboard = () => {
                   }}
                   className="flex-1 py-2.5 border rounded-xl text-xs font-bold text-[#57534E]"
                 >
-                  Kanselahin
+                  {t("cancelButton")}
                 </button>
                 <button
                   type="submit"
                   disabled={savingProd}
                   className="flex-1 py-2.5 bg-[#064E3B] text-white rounded-xl text-xs font-bold"
                 >
-                  {savingProd ? "Inililigtas..." : "I-save Pagbabago"}
+                  {savingProd ? t("savingChangesButton") : t("saveChangesButton")}
                 </button>
               </div>
             </form>
@@ -1845,7 +1852,7 @@ export const AdminDashboard = () => {
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-[#57534E]/10">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-[#064E3B]">
-                Magdagdag ng Staff
+                {t("addStaffTitle")}
               </h2>
               <button
                 onClick={() => setIsAddStaffOpen(false)}
@@ -1857,7 +1864,7 @@ export const AdminDashboard = () => {
             <form onSubmit={handleAddStaff} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold mb-1">
-                  Email ng Staff
+                  {language === "fil" ? "Email ng Staff" : "Staff Email"}
                 </label>
                 <input
                   type="email"
@@ -1868,7 +1875,7 @@ export const AdminDashboard = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold mb-1">Role</label>
+                <label className="block text-xs font-bold mb-1">{t("roleColumn")}</label>
                 <select
                   className="w-full px-4 py-2 border rounded-xl text-sm bg-white"
                   value={staffRole}
@@ -1885,13 +1892,13 @@ export const AdminDashboard = () => {
                   onClick={() => setIsAddStaffOpen(false)}
                   className="flex-1 py-2.5 border rounded-xl text-xs font-bold text-[#57534E]"
                 >
-                  Kanselahin
+                  {t("cancelButton")}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-2.5 bg-[#064E3B] text-white rounded-xl text-xs font-bold"
                 >
-                  Idagdag
+                  {language === "fil" ? "Idagdag" : "Add"}
                 </button>
               </div>
             </form>
@@ -1906,8 +1913,8 @@ export const AdminDashboard = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-[#064E3B]">
                 {invitationInfo.exists
-                  ? "Itinalaga bilang Staff"
-                  : "Imbitasyon sa Staff"}
+                  ? t("assignedAsStaffTitle")
+                  : t("staffInvitationTitle")}
               </h2>
               <button
                 onClick={() => setInvitationInfo(null)}
@@ -1920,30 +1927,52 @@ export const AdminDashboard = () => {
             <div className="space-y-4">
               <p className="text-xs text-stone-600 leading-relaxed">
                 {invitationInfo.exists ? (
-                  <>
-                    Ang email na{" "}
-                    <strong className="text-stone-900">
-                      {invitationInfo.email}
-                    </strong>{" "}
-                    ay mayroon nang account. Maaari mo silang padalhan ng abiso
-                    na mag-login sa kanilang account para magbukas ang POS.
-                  </>
+                  language === "fil" ? (
+                    <>
+                      Ang email na{" "}
+                      <strong className="text-stone-900">
+                        {invitationInfo.email}
+                      </strong>{" "}
+                      ay mayroon nang account. Maaari mo silang padalhan ng abiso
+                      na mag-login sa kanilang account para magbukas ang POS.
+                    </>
+                  ) : (
+                    <>
+                      The email{" "}
+                      <strong className="text-stone-900">
+                        {invitationInfo.email}
+                      </strong>{" "}
+                      already has an account. You can send them a notification
+                      to log in to their account to open the POS.
+                    </>
+                  )
                 ) : (
-                  <>
-                    Ang email na{" "}
-                    <strong className="text-stone-900">
-                      {invitationInfo.email}
-                    </strong>{" "}
-                    ay wala pang account. Mangyaring ipadala ang mga sumusunod
-                    na tagubilin upang magrehistro sila bilang staff sa inyong
-                    tindahan.
-                  </>
+                  language === "fil" ? (
+                    <>
+                      Ang email na{" "}
+                      <strong className="text-stone-900">
+                        {invitationInfo.email}
+                      </strong>{" "}
+                      ay wala pang account. Mangyaring ipadala ang mga sumusunod
+                      na tagubilin upang magrehistro sila bilang staff sa inyong
+                      tindahan.
+                    </>
+                  ) : (
+                    <>
+                      The email{" "}
+                      <strong className="text-stone-900">
+                        {invitationInfo.email}
+                      </strong>{" "}
+                      does not have an account yet. Please send the following
+                      instructions for them to register as staff in your store.
+                    </>
+                  )
                 )}
               </p>
 
               <div>
                 <label className="block text-xs font-bold text-stone-500 mb-1.5 uppercase tracking-wider">
-                  Mensahe / Tagubilin
+                  {t("messageInstructionsLabel")}
                 </label>
                 <textarea
                   readOnly
@@ -1958,11 +1987,11 @@ export const AdminDashboard = () => {
                   type="button"
                   onClick={() => {
                     navigator.clipboard.writeText(invitationInfo.body);
-                    showToast("Mensahe ay nakopya na sa clipboard!");
+                    showToast(t("messageCopied"));
                   }}
                   className="flex-1 py-2.5 border border-stone-200 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-50 transition cursor-pointer text-center"
                 >
-                  Kopyahin ang Mensahe
+                  {t("copyMessageButton")}
                 </button>
                 <button
                   type="button"
@@ -1976,7 +2005,7 @@ export const AdminDashboard = () => {
                   }}
                   className="flex-1 py-2.5 bg-[#064E3B] hover:bg-[#064E3B]/90 text-white rounded-xl text-xs font-bold transition cursor-pointer text-center"
                 >
-                  Ipadala via Email
+                  {t("sendViaEmailButton")}
                 </button>
               </div>
             </div>
@@ -2040,7 +2069,7 @@ const MOCK_STOCK_DISTRIBUTION = [
 ];
 
 const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading = false, currency = "₱", storeName = "Tindahan", storeDetails = {} }) => {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   // 1. Loading state with premium shimmer animation
   if (loading) {
     return (
@@ -2052,7 +2081,9 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
             <div className="h-3 bg-stone-100 rounded w-1/3"></div>
           </div>
           <div className="h-48 bg-stone-50 rounded-xl w-full flex items-center justify-center">
-            <span className="text-xs text-stone-400 font-semibold animate-pulse">Inihahanda ang ulat ng benta...</span>
+            <span className="text-xs text-stone-400 font-semibold animate-pulse">
+              {language === "fil" ? "Inihahanda ang ulat ng benta..." : "Preparing sales report..."}
+            </span>
           </div>
         </div>
         {/* Two smaller charts skeleton */}
@@ -2063,7 +2094,9 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
               <div className="h-3 bg-stone-100 rounded w-1/2"></div>
             </div>
             <div className="h-40 bg-stone-50 rounded-xl w-full flex items-center justify-center">
-              <span className="text-xs text-stone-400 font-semibold">Inilalagay ang mga produkto...</span>
+              <span className="text-xs text-stone-400 font-semibold">
+                {language === "fil" ? "Inilalagay ang mga produkto..." : "Loading products..."}
+              </span>
             </div>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm h-72 flex flex-col justify-between">
@@ -2072,7 +2105,9 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
               <div className="h-3 bg-stone-100 rounded w-1/2"></div>
             </div>
             <div className="h-40 bg-stone-50 rounded-xl w-full flex items-center justify-center">
-              <span className="text-xs text-stone-400 font-semibold">Kinakalkula ang imbentaryo...</span>
+              <span className="text-xs text-stone-400 font-semibold">
+                {language === "fil" ? "Kinakalkula ang imbentaryo..." : "Calculating inventory..."}
+              </span>
             </div>
           </div>
         </div>
@@ -2439,7 +2474,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
     const categoryStockSums = {};
     let totalStock = 0;
     products.forEach((p) => {
-      const cat = p.category || "Iba pa";
+      const cat = p.category || t("otherCategory");
       const stockVal = Number(p.stock_quantity) || 0;
       categoryStockSums[cat] = (categoryStockSums[cat] || 0) + stockVal;
       totalStock += stockVal;
@@ -2454,7 +2489,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
     if (totalStock === 0 && products.length > 0) {
       const categoryCounts = {};
       products.forEach((p) => {
-        const cat = p.category || "Iba pa";
+        const cat = p.category || t("otherCategory");
         categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
       });
       distributionArr = Object.keys(categoryCounts).map((cat) => ({
@@ -2470,7 +2505,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
       const top4 = distributionArr.slice(0, 4);
       const rest = distributionArr.slice(4);
       const restSum = rest.reduce((sum, item) => sum + item.value, 0);
-      top4.push({ name: "Iba pa", value: restSum });
+      top4.push({ name: t("otherCategory"), value: restSum });
       distributionArr = top4;
     }
 
@@ -2505,7 +2540,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
             />
           </svg>
-          {language === "fil" ? "I-export ang Ulat sa Excel" : "Export Report to Excel"}
+          {t("exportExcelReport")}
         </button>
       </div>
 
@@ -2514,12 +2549,12 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-sm font-extrabold text-[#064E3B] uppercase tracking-wider">
-              Ulat ng Benta (Sales Performance)
+              {t("salesPerformanceReport")}
             </h3>
             <p className="text-xs text-[#57534E]">
               {useMock
-                ? "Visual na takbo ng kabuuang kita ngayong linggo (Demo Data)"
-                : "Visual na takbo ng kabuuang kita ngayong linggo (Live Data)"}
+                ? t("weeklyProfitTrendDemo")
+                : t("weeklyProfitTrendLive")}
             </p>
           </div>
           <span className={`text-[10px] font-bold px-2.5 py-1 rounded-xl uppercase tracking-wider ${
@@ -2533,7 +2568,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
         <div className="h-64 w-full">
           {salesData.length === 0 ? (
             <div className="h-full flex items-center justify-center text-xs text-[#57534E]">
-              Walang data ng benta sa kasalukuyan.
+              {t("noSalesData")}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -2561,7 +2596,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
                 <Line
                   type="monotone"
                   dataKey="benta"
-                  name={`Benta (Revenue) (${currency})`}
+                  name={`${t("revenueLabel")} (${currency})`}
                   stroke="#064E3B"
                   strokeWidth={3}
                   activeDot={{ r: 6 }}
@@ -2569,7 +2604,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
                 <Line
                   type="monotone"
                   dataKey="kita"
-                  name={`Kita (Net Profit) (${currency})`}
+                  name={`${t("netProfitLabel")} (${currency})`}
                   stroke="#10B981"
                   strokeWidth={3}
                   activeDot={{ r: 6 }}
@@ -2587,16 +2622,16 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
         <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-extrabold text-[#064E3B] uppercase tracking-wider mb-1">
-              Pinakamabentang Produkto
+              {t("topSellingProducts")}
             </h3>
             <p className="text-xs text-[#57534E] mb-6">
-              Top 5 items na may pinakamaraming quantity na naibenta
+              {t("topProductsSub")}
             </p>
           </div>
           <div className="h-56 w-full">
             {topProducts.length === 0 ? (
               <div className="h-full flex items-center justify-center text-xs text-[#57534E]">
-                Walang bentang produkto sa kasalukuyan.
+                {t("noProductsSold")}
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -2634,7 +2669,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
                   />
                   <Bar
                     dataKey="sold"
-                    name="Naibenta"
+                    name={t("qtySoldLabel")}
                     fill="#047857"
                     radius={[0, 6, 6, 0]}
                     barSize={14}
@@ -2649,16 +2684,16 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
         <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-extrabold text-[#064E3B] uppercase tracking-wider mb-1">
-              Distribusyon ng Imbentaryo
+              {t("inventoryDistribution")}
             </h3>
             <p className="text-xs text-[#57534E] mb-4">
-              Porsyento ng mga produkto sa loob ng bawat Kategorya
+              {t("inventoryDistSub")}
             </p>
           </div>
           <div className="h-56 w-full flex flex-col sm:flex-row items-center justify-center gap-2">
             {stockDistribution.length === 0 ? (
               <div className="h-full w-full flex items-center justify-center text-xs text-[#57534E]">
-                Walang mga kategorya o imbentaryo.
+                {t("noCategoriesInventory")}
               </div>
             ) : (
               <>
