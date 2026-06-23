@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
+import * as XLSX from "xlsx";
 import { Navbar } from "../shared/Navbar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -1211,6 +1212,8 @@ export const AdminDashboard = () => {
             isMock={isMockStore(activeStoreId)}
             loading={loadingProds || loadingOrders}
             currency={storeDetails.currency || "₱"}
+            storeName={storeDetails.name}
+            storeDetails={storeDetails}
           />
         )}
 
@@ -1968,7 +1971,8 @@ const MOCK_STOCK_DISTRIBUTION = [
   { name: "Coffee", value: 10 },
 ];
 
-const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading = false, currency = "₱" }) => {
+const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading = false, currency = "₱", storeName = "Tindahan", storeDetails = {} }) => {
+  const { language } = useLanguage();
   // 1. Loading state with premium shimmer animation
   if (loading) {
     return (
@@ -2017,6 +2021,248 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
       return new Date(order.created_at);
     }
     return null;
+  };
+
+  const handleExportToExcel = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // 1. Sheet 1: Store Profile
+      const storeRows = [
+        ["ULAT SA OPERASYON / OPERATIONS REPORT"],
+        [],
+        ["Pangalan ng Tindahan (Store Name)", storeName],
+        ["Uri ng Industriya (Industry)", storeDetails.industry_type || "Retail"],
+        ["Lokasyon / Address", storeDetails.address || "N/A"],
+        ["Numero ng Telepono (Contact)", storeDetails.contact || "N/A"],
+        ["Simbolo ng Currency", currency],
+        ["Database Mode", isMock ? "Demo (Mock) Mode" : "Live Database (Firestore)"],
+        ["Petsa ng Pag-export (Export Date)", new Date().toLocaleString()],
+        [],
+        ["POS by KYUT - All Rights Reserved"]
+      ];
+      const wsStore = XLSX.utils.aoa_to_sheet(storeRows);
+      wsStore["!cols"] = [{ wch: 35 }, { wch: 45 }];
+      wsStore["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
+      XLSX.utils.book_append_sheet(wb, wsStore, language === "fil" ? "Impormasyon ng Tindahan" : "Store Information");
+
+      // 2. Sheet 2: Inventory Sheet
+      const inventoryRows = [
+        ["ULAT NG IMBENTARYO / INVENTORY REPORT"],
+        [],
+        [
+          language === "fil" ? "Pangalan ng Produkto" : "Product Name",
+          language === "fil" ? "Kategorya" : "Category",
+          "Barcode / SKU",
+          language === "fil" ? "Dami ng Stock" : "Stock Quantity",
+          language === "fil" ? "Puhunan (Unit Cost)" : "Unit Cost Price",
+          language === "fil" ? "Benta (Unit Price)" : "Unit Selling Price",
+          language === "fil" ? "Kabuuang Puhunan (Total Cost)" : "Total Cost Value",
+          language === "fil" ? "Kalkuladong Benta (Total Selling)" : "Total Selling Value"
+        ]
+      ];
+
+      let totalStockUnits = 0;
+      let totalCostValue = 0;
+      let totalSellingValue = 0;
+
+      products.forEach((p) => {
+        const stock = Number(p.stock_quantity) || 0;
+        const cost = Number(p.cost_price) || 0;
+        const selling = Number(p.selling_price) || 0;
+        const itemTotalCost = stock * cost;
+        const itemTotalSelling = stock * selling;
+
+        totalStockUnits += stock;
+        totalCostValue += itemTotalCost;
+        totalSellingValue += itemTotalSelling;
+
+        inventoryRows.push([
+          p.name || "N/A",
+          p.category || "N/A",
+          p.barcode_sku || "N/A",
+          stock,
+          cost,
+          selling,
+          Number(itemTotalCost.toFixed(2)),
+          Number(itemTotalSelling.toFixed(2))
+        ]);
+      });
+
+      inventoryRows.push([]);
+      inventoryRows.push([
+        language === "fil" ? "KABUUAN (TOTALS)" : "TOTALS",
+        "",
+        "",
+        totalStockUnits,
+        "",
+        "",
+        Number(totalCostValue.toFixed(2)),
+        Number(totalSellingValue.toFixed(2))
+      ]);
+
+      const wsInventory = XLSX.utils.aoa_to_sheet(inventoryRows);
+      wsInventory["!cols"] = [
+        { wch: 30 }, // Name
+        { wch: 15 }, // Category
+        { wch: 18 }, // Barcode
+        { wch: 15 }, // Stock Qty
+        { wch: 18 }, // Unit Cost
+        { wch: 18 }, // Unit Selling
+        { wch: 22 }, // Total Cost
+        { wch: 22 }  // Total Selling
+      ];
+      wsInventory["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }];
+      XLSX.utils.book_append_sheet(wb, wsInventory, language === "fil" ? "Imbentaryo" : "Inventory");
+
+      // 3. Sheet 3: Transactions Sheet
+      const productCostMap = {};
+      const productPriceMap = {};
+      products.forEach((p) => {
+        if (p.name) {
+          productCostMap[p.name] = Number(p.cost_price) || 0;
+          productPriceMap[p.name] = Number(p.selling_price) || 0;
+        }
+      });
+
+      const ordersByDate = {};
+      orders.forEach((order) => {
+        const dateObj = getOrderDate(order);
+        if (!dateObj) return;
+        const dateStr = dateObj.toISOString().split("T")[0];
+        if (!ordersByDate[dateStr]) {
+          ordersByDate[dateStr] = [];
+        }
+        ordersByDate[dateStr].push(order);
+      });
+
+      const sortedDates = Object.keys(ordersByDate).sort().reverse();
+      const transactionRows = [
+        ["ULAT NG MGA TRANSAKSYON / TRANSACTION REPORT"],
+        [],
+      ];
+
+      let grandTotalRevenue = 0;
+      let grandTotalProfit = 0;
+
+      sortedDates.forEach((dateStr) => {
+        transactionRows.push([`Petsa / Date: ${dateStr}`]);
+        transactionRows.push([
+          "ID ng Order (Order ID)",
+          language === "fil" ? "Oras" : "Time",
+          language === "fil" ? "Pangalan ng Aytem" : "Item Name",
+          language === "fil" ? "Dami" : "Quantity",
+          language === "fil" ? "Puhunan (Unit Cost)" : "Unit Cost",
+          language === "fil" ? "Benta (Unit Price)" : "Unit Price",
+          language === "fil" ? "Kabuuang Benta" : "Total Revenue",
+          language === "fil" ? "Kita (Profit)" : "Net Profit"
+        ]);
+
+        let dateRevenue = 0;
+        let dateProfit = 0;
+
+        ordersByDate[dateStr].forEach((order) => {
+          let orderRevenue = 0;
+          let orderCost = 0;
+
+          if (order.items && Array.isArray(order.items)) {
+            order.items.forEach((item) => {
+              const qty = Number(item.quantity) || 0;
+              const price = Number(item.price) || productPriceMap[item.name] || 0;
+              const cost = productCostMap[item.name] || 0;
+              orderCost += cost * qty;
+              orderRevenue += price * qty;
+            });
+          }
+
+          const profitMargin = orderRevenue > 0 ? (orderRevenue - orderCost) / orderRevenue : 0;
+          const totalActual = Number(order.total) || 0;
+          const totalProfit = totalActual * profitMargin;
+
+          dateRevenue += totalActual;
+          dateProfit += totalProfit;
+
+          if (order.items && Array.isArray(order.items)) {
+            order.items.forEach((item, idx) => {
+              const qty = Number(item.quantity) || 0;
+              const selling = Number(item.price) || productPriceMap[item.name] || 0;
+              const cost = productCostMap[item.name] || 0;
+              const itemRevenue = qty * selling;
+              const itemProfit = orderRevenue > 0 ? itemRevenue * (totalProfit / orderRevenue) : 0;
+
+              const dateObj = getOrderDate(order);
+              const timeStr = dateObj ? dateObj.toTimeString().split(" ")[0].substring(0, 5) : "N/A";
+
+              transactionRows.push([
+                idx === 0 ? order.id : "",
+                idx === 0 ? timeStr : "",
+                item.name || "N/A",
+                qty,
+                cost,
+                selling,
+                Number(itemRevenue.toFixed(2)),
+                Number(itemProfit.toFixed(2))
+              ]);
+            });
+          }
+        });
+
+        grandTotalRevenue += dateRevenue;
+        grandTotalProfit += dateProfit;
+
+        transactionRows.push([
+          language === "fil" ? "KABUUAN SA PETSANG ITO" : "SUBTOTAL FOR DATE",
+          "",
+          "",
+          "",
+          "",
+          "",
+          Number(dateRevenue.toFixed(2)),
+          Number(dateProfit.toFixed(2))
+        ]);
+        transactionRows.push([]);
+      });
+
+      transactionRows.push([
+        language === "fil" ? "KABUUANG BENTA (GRAND REVENUE)" : "GRAND TOTAL REVENUE",
+        "",
+        "",
+        "",
+        "",
+        "",
+        Number(grandTotalRevenue.toFixed(2))
+      ]);
+      transactionRows.push([
+        language === "fil" ? "KABUUANG KITA (GRAND PROFIT)" : "GRAND TOTAL NET PROFIT",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        Number(grandTotalProfit.toFixed(2))
+      ]);
+
+      const wsTransactions = XLSX.utils.aoa_to_sheet(transactionRows);
+      wsTransactions["!cols"] = [
+        { wch: 22 }, // Order ID
+        { wch: 10 }, // Time
+        { wch: 30 }, // Item Name
+        { wch: 10 }, // Qty
+        { wch: 15 }, // Unit Cost
+        { wch: 15 }, // Unit Price
+        { wch: 18 }, // Total Revenue
+        { wch: 18 }  // Net Profit
+      ];
+      wsTransactions["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }];
+      XLSX.utils.book_append_sheet(wb, wsTransactions, language === "fil" ? "Transaksyon" : "Transactions");
+
+      const safeStoreName = storeName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      XLSX.writeFile(wb, `${safeStoreName}_operations_report.xlsx`);
+    } catch (err) {
+      console.error("Failed to export excel:", err);
+      alert(language === "fil" ? "Hindi ma-export ang Excel report." : "Failed to export Excel report.");
+    }
   };
 
   // Determine which data to use (mock fallback if isMock or database is completely empty)
@@ -2172,6 +2418,29 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
 
   return (
     <div className="space-y-6 my-6">
+      {/* Excel Export Button Bar */}
+      <div className="flex justify-end bg-white p-4 rounded-2xl border border-[#57534E]/15 shadow-sm items-center">
+        <button
+          onClick={handleExportToExcel}
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#064E3B] text-white rounded-xl text-xs font-bold hover:bg-[#047857] shadow-sm transition-all cursor-pointer"
+        >
+          <svg
+            className="h-4.5 w-4.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          {language === "fil" ? "I-export ang Ulat sa Excel" : "Export Report to Excel"}
+        </button>
+      </div>
+
       {/* CARD 1: Sales Analytics */}
       <div className="bg-white p-6 rounded-2xl border border-[#57534E]/15 shadow-sm">
         <div className="flex justify-between items-center mb-6">
