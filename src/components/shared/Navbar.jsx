@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import { useLanguage } from "../../context/LanguageContext";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { logout, userRole, activeStoreId, currentUser } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   // Helper para malaman ang active route
@@ -21,7 +23,7 @@ export const Navbar = () => {
 
   const navLinks = [
     {
-      name: "Mga Tindahan",
+      name: t("stores"),
       path: "/stores",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -31,7 +33,7 @@ export const Navbar = () => {
       visible: true
     },
     {
-      name: "Admin View",
+      name: t("adminView"),
       path: "/admin/dashboard",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -41,7 +43,7 @@ export const Navbar = () => {
       visible: userRole === "manager"
     },
     {
-      name: "POS Screen",
+      name: t("posScreen"),
       path: "/cashier/pos",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -51,7 +53,7 @@ export const Navbar = () => {
       visible: !!activeStoreId
     },
     {
-      name: "Transaksyon",
+      name: t("transactions"),
       path: "/cashier/transactions",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -79,7 +81,7 @@ export const Navbar = () => {
               <div className="flex flex-col">
                 <span className="font-extrabold text-lg tracking-tight">KYUT POS</span>
                 {activeStoreId && (
-                  <span className="text-[10px] text-white/70 font-mono -mt-1">Active: {activeStoreId}</span>
+                  <span className="text-[10px] text-white/70 font-mono -mt-1">{t("activeStore")}: {activeStoreId}</span>
                 )}
               </div>
             </div>
@@ -130,7 +132,7 @@ export const Navbar = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                Logout
+                {t("logout")}
               </button>
 
               {/* Burger/Drawer Trigger on Mobile */}
@@ -182,7 +184,7 @@ export const Navbar = () => {
           </div>
           {activeStoreId && (
             <div className="mt-3 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-mono">
-              Active Store: {activeStoreId}
+              {t("activeStore")}: {activeStoreId}
             </div>
           )}
         </div>
@@ -230,7 +232,7 @@ export const Navbar = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            Logout
+            {t("logout")}
           </button>
         </div>
       </div>

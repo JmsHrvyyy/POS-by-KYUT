@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { LanguageProvider } from "./context/LanguageContext";
 import { SignupForm } from "./components/auth/SignupForm";
 import { LoginForm } from "./components/auth/LoginForm";
 import { StoreSelector } from "./components/shared/StoreSelector";
@@ -20,29 +21,31 @@ export default function App() {
   return (
     // Wrapper para sa global auth state at active_store_id memory ng app
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/signup" element={<SignupForm />} />
-          <Route path="/unauthorized" element={<UnauthorizedScreen />} />
+      <LanguageProvider>
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/signup" element={<SignupForm />} />
+            <Route path="/unauthorized" element={<UnauthorizedScreen />} />
 
-          {/* Standalone Digital Receipt View (Public / Scannable) */}
-          <Route path="/receipt/:orderId" element={<DigitalReceipt />} />
+            {/* Standalone Digital Receipt View (Public / Scannable) */}
+            <Route path="/receipt/:orderId" element={<DigitalReceipt />} />
 
-          {/* Main Landing / Store Selection Route */}
-          <Route path="/stores" element={<StoreSelector />} />
+            {/* Main Landing / Store Selection Route */}
+            <Route path="/stores" element={<StoreSelector />} />
 
-          {/* Role-Specific Protected Routes */}
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/cashier/pos" element={<CashierPOS />} />
-          <Route path="/cashier/transactions" element={<TransactionHistory />} />
-          <Route path="/pos/customer-display" element={<CustomerDisplay />} />
+            {/* Role-Specific Protected Routes */}
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/cashier/pos" element={<CashierPOS />} />
+            <Route path="/cashier/transactions" element={<TransactionHistory />} />
+            <Route path="/pos/customer-display" element={<CustomerDisplay />} />
 
-          {/* Default Route: Kapag walang match o hindi valid ang URL, ibabalik sa login sa pasimula */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
+            {/* Default Route: Kapag walang match o hindi valid ang URL, ibabalik sa login sa pasimula */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Router>
+      </LanguageProvider>
     </AuthProvider>
   );
 }

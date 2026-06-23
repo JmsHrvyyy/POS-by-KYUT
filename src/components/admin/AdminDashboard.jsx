@@ -1,7 +1,9 @@
+/* eslint-disable no-unused-vars, react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { Navbar } from "../shared/Navbar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { db } from "../../config/firebase";
 import {
   collection,
@@ -60,6 +62,7 @@ const isMockStore = (id) => id?.startsWith("store_00");
 export const AdminDashboard = () => {
   const navigate = useNavigate();
   const { activeStoreId, activeStoreName, userRole } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
 
   // Role authorization redirect: Staff is not allowed to access the admin dashboard
   useEffect(() => {
@@ -705,7 +708,7 @@ export const AdminDashboard = () => {
     setSavingSettings(true);
     try {
       if (isMockStore(activeStoreId)) {
-        showToast("Matagumpay na na-update ang store settings (Demo Mode)!");
+        showToast(t("successSaveSettings") + " (Demo Mode)!");
       } else {
         await updateStore(activeStoreId, {
           name: storeDetails.name,
@@ -714,11 +717,11 @@ export const AdminDashboard = () => {
           contact: storeDetails.contact || "",
           currency: storeDetails.currency || "₱",
         });
-        showToast("Matagumpay na na-save ang mga pagbabago sa tindahan!");
+        showToast(t("successSaveSettings"));
       }
     } catch (err) {
       console.error("Error updating store settings:", err);
-      showToast("Hindi ma-save ang settings ng tindahan.", "error");
+      showToast(t("errorSaveSettings"), "error");
     } finally {
       setSavingSettings(false);
     }
@@ -727,7 +730,7 @@ export const AdminDashboard = () => {
   const mainTabs = [
     {
       key: "inventory",
-      label: "Inventory / Staff",
+      label: t("inventory"),
       icon: (
         <svg
           className="h-4 w-4"
@@ -746,7 +749,7 @@ export const AdminDashboard = () => {
     },
     {
       key: "analytics",
-      label: "Analytics",
+      label: t("analytics"),
       icon: (
         <svg
           className="h-4 w-4"
@@ -765,7 +768,7 @@ export const AdminDashboard = () => {
     },
     {
       key: "settings",
-      label: "Settings",
+      label: t("settings"),
       icon: (
         <svg
           className="h-4 w-4"
@@ -793,7 +796,7 @@ export const AdminDashboard = () => {
   const tabs = [
     {
       key: "inventory",
-      label: "Imbentaryo View",
+      label: t("inventoryView"),
       icon: (
         <svg
           className="h-4 w-4"
@@ -812,7 +815,7 @@ export const AdminDashboard = () => {
     },
     {
       key: "products",
-      label: "Pamahalaan / Actions",
+      label: t("manageAndUpdate"),
       icon: (
         <svg
           className="h-4 w-4"
@@ -831,7 +834,7 @@ export const AdminDashboard = () => {
     },
     {
       key: "staff",
-      label: "Staff",
+      label: t("staffTitle"),
       icon: (
         <svg
           className="h-4 w-4"
@@ -1219,7 +1222,7 @@ export const AdminDashboard = () => {
               <div className="w-full md:w-1/3 bg-gradient-to-br from-[#064E3B] to-[#047857] p-6 rounded-2xl text-white flex flex-col justify-between shadow-md">
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/20">
-                    Store Profile
+                    {t("storeProfileTitle")}
                   </span>
                   <h3 className="text-xl font-extrabold mt-3 break-words">
                     {storeDetails.name}
@@ -1253,16 +1256,16 @@ export const AdminDashboard = () => {
               {/* Form Side */}
               <form onSubmit={handleUpdateStoreSettings} className="flex-1 space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-[#064E3B]">Pamahalaan ang Tindahan</h3>
+                  <h3 className="text-lg font-bold text-[#064E3B]">{t("manageStoreTitle")}</h3>
                   <p className="text-xs text-[#57534E]">
-                    I-update ang mga pangunahing detalye ng iyong tindahan na makikita sa POS at sa mga digital receipt.
+                    {t("manageStoreDesc")}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
-                      Pangalan ng Tindahan
+                      {t("storeNameLabel")}
                     </label>
                     <input
                       type="text"
@@ -1275,7 +1278,7 @@ export const AdminDashboard = () => {
 
                   <div>
                     <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
-                      Uri ng Industriya
+                      {t("industryTypeLabel")}
                     </label>
                     <select
                       value={storeDetails.industry_type}
@@ -1291,7 +1294,7 @@ export const AdminDashboard = () => {
 
                 <div>
                   <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
-                    Lokasyon / Address
+                    {t("locationAddressLabel")}
                   </label>
                   <input
                     type="text"
@@ -1305,7 +1308,7 @@ export const AdminDashboard = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
-                      Numero ng Telepono / Contact
+                      {t("phoneLabel")}
                     </label>
                     <input
                       type="text"
@@ -1318,7 +1321,7 @@ export const AdminDashboard = () => {
 
                   <div>
                     <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
-                      Simbolo ng Currency
+                      {t("currencyLabel")}
                     </label>
                     <select
                       value={storeDetails.currency}
@@ -1330,6 +1333,23 @@ export const AdminDashboard = () => {
                       <option value="€">EUR (€) - Euro</option>
                       <option value="¥">JPY/CNY (¥) - Yen/Yuan</option>
                       <option value="£">GBP (£) - Pound Sterling</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Global Language Option */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#57534E] mb-1.5 uppercase tracking-wider">
+                      {t("languageLabel")}
+                    </label>
+                    <select
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-[#57534E]/25 rounded-xl bg-white focus:outline-none focus:border-[#064E3B] text-sm bg-[#FAFAF9]"
+                    >
+                      <option value="fil">{t("filipinoOption")}</option>
+                      <option value="en">{t("englishOption")}</option>
                     </select>
                   </div>
                 </div>
@@ -1346,10 +1366,10 @@ export const AdminDashboard = () => {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span>Inililigtas...</span>
+                        <span>{t("savingChangesButton")}</span>
                       </>
                     ) : (
-                      <span>I-save ang Pagbabago</span>
+                      <span>{t("saveChangesButton")}</span>
                     )}
                   </button>
                 </div>
@@ -2005,7 +2025,7 @@ const AnalyticsSection = ({ products = [], orders = [], isMock = false, loading 
 
   // 2. Data Calculation
   let salesData = MOCK_SALES_DATA;
-  let topProducts = MOCK_TOP_PRODUCTS;
+  let topProducts;
   let stockDistribution = MOCK_STOCK_DISTRIBUTION;
 
   if (useMock) {
