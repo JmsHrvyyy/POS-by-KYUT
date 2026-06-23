@@ -7,7 +7,7 @@ import { db } from "../../config/firebase";
 export const LoginForm = () => {
   const { login, resetPassword } = useAuth();
   const navigate = useNavigate();
-  
+
   // Login Form states
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,11 +34,11 @@ export const LoginForm = () => {
 
     // Input Validation (Frontend Checklist #1)
     if (!email.trim() || !password.trim()) {
-      setError("Mangyaring punan ang lahat ng field.");
+      setError("Please fill in all fields.");
       return;
     }
     if (!isValidEmail(email)) {
-      setError("Mangyaring maglagay ng valid na email address.");
+      setError("Please enter a valid email address.");
       return;
     }
 
@@ -65,11 +65,11 @@ export const LoginForm = () => {
       console.error("Login error:", err);
       // User-friendly error mapping sa Tagalog
       if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
-        setError("Maling email o password. Pakisuri at subukan muli.");
+        setError("Incorrect email or password. Please check and try again.");
       } else if (err.code === "auth/too-many-requests") {
-        setError("Masyadong maraming maling pagtatangka. Subukan muli mamaya.");
+        setError("Too many failed attempts. Please try again later.");
       } else {
-        setError(err.message || "May naganap na error habang naglo-login.");
+        setError(err.message || "An error occurred while logging in.");
       }
     } finally {
       setLoading(false);
@@ -82,27 +82,27 @@ export const LoginForm = () => {
     setResetSuccess("");
 
     if (!resetEmail.trim()) {
-      setResetError("Kinakailangan ang email address.");
+      setResetError("Email address is required.");
       return;
     }
     if (!isValidEmail(resetEmail)) {
-      setResetError("Mangyaring maglagay ng valid na email address.");
+      setResetError("Please enter a valid email address.");
       return;
     }
 
     try {
       setResetLoading(true);
       await resetPassword(resetEmail);
-      setResetSuccess("Naipadala na ang password reset link sa iyong email! Pakisuri ang iyong inbox o spam folder.");
+      setResetSuccess("Password reset link sent to your email! Please check your inbox or spam folder.");
       setResetEmail("");
     } catch (err) {
       console.error("Reset password error:", err);
       if (err.code === "auth/user-not-found") {
-        setResetError("Walang account na nakarehistro sa email na ito.");
+        setResetError("No account is registered with this email.");
       } else if (err.code === "auth/invalid-email") {
-        setResetError("Hindi valid ang email address format.");
+        setResetError("Invalid email address format.");
       } else {
-        setResetError("May naganap na error. Subukan muli.");
+        setResetError("An error occurred. Please try again.");
       }
     } finally {
       setResetLoading(false);
@@ -112,7 +112,7 @@ export const LoginForm = () => {
   return (
     <div className="min-h-screen bg-[#FAFAF9] flex flex-col justify-center items-center px-4 font-sans text-[#0C0A09]">
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg border border-[#57534E]/10 transition-transform duration-300 hover:scale-[1.01]">
-        
+
         {/* CONDITIONAL RENDER: forgot password card view versus login card view */}
         {!isForgotPassword ? (
           <>
@@ -121,8 +121,8 @@ export const LoginForm = () => {
               <span className="text-[#064E3B] font-extrabold text-3xl tracking-tight block mb-2">
                 POS-by-KYUT
               </span>
-              <h2 className="text-xl font-bold text-[#57534E]">Mag-login sa iyong Account</h2>
-              <p className="text-sm text-[#57534E]/70 mt-1">Suriin ang mga transaksyon at benta ng tindahan</p>
+              <h2 className="text-xl font-bold text-[#57534E]">Sign In to Your Account</h2>
+              <p className="text-sm text-[#57534E]/70 mt-1">Monitor your store transactions and sales</p>
             </div>
 
             {/* Error Notification Alert */}
@@ -143,11 +143,11 @@ export const LoginForm = () => {
                   Email Address <span className="text-[#F97316]">*</span>
                 </label>
                 <div className="relative">
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     disabled={loading}
                     className="w-full pl-10 pr-4 py-3 border border-[#57534E]/30 rounded-xl focus:outline-none focus:border-[#064E3B] focus:ring-2 focus:ring-[#064E3B]/10 transition duration-200 disabled:bg-[#FAFAF9]"
-                    placeholder="halimbawa@email.com"
+                    placeholder="youremail@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -166,7 +166,7 @@ export const LoginForm = () => {
                   <label className="block text-sm font-semibold text-[#0C0A09]">
                     Password <span className="text-[#F97316]">*</span>
                   </label>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => {
                       setIsForgotPassword(true);
@@ -175,12 +175,12 @@ export const LoginForm = () => {
                     }}
                     className="text-xs text-[#064E3B] font-bold hover:underline cursor-pointer"
                   >
-                    Nakalimutan ang Password?
+                    Forgot Password?
                   </button>
                 </div>
                 <div className="relative">
-                  <input 
-                    type={showPassword ? "text" : "password"} 
+                  <input
+                    type={showPassword ? "text" : "password"}
                     disabled={loading}
                     className="w-full pl-10 pr-12 py-3 border border-[#57534E]/30 rounded-xl focus:outline-none focus:border-[#064E3B] focus:ring-2 focus:ring-[#064E3B]/10 transition duration-200 disabled:bg-[#FAFAF9]"
                     placeholder="******"
@@ -215,8 +215,8 @@ export const LoginForm = () => {
               </div>
 
               {/* Submit Button */}
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
                 className="w-full bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold py-3.5 rounded-xl transition duration-200 focus:outline-none focus:ring-4 focus:ring-[#064E3B]/20 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-4 shadow-sm cursor-pointer"
               >
@@ -226,10 +226,10 @@ export const LoginForm = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>Nagla-login...</span>
+                    <span>Signing in...</span>
                   </>
                 ) : (
-                  <span>Mag-login</span>
+                  <span>Sign In</span>
                 )}
               </button>
             </form>
@@ -237,9 +237,9 @@ export const LoginForm = () => {
             {/* Signup redirection link */}
             <div className="text-center mt-6 pt-6 border-t border-[#57534E]/10">
               <p className="text-sm text-[#57534E]">
-                Walang account?{" "}
+                Don't have an account?{" "}
                 <Link to="/signup" className="text-[#064E3B] font-bold hover:underline">
-                  Mag-register dito
+                  Register here
                 </Link>
               </p>
             </div>
@@ -251,8 +251,8 @@ export const LoginForm = () => {
               <span className="text-[#064E3B] font-extrabold text-3xl tracking-tight block mb-2">
                 POS-by-KYUT
               </span>
-              <h2 className="text-xl font-bold text-[#57534E]">Reset ng Password</h2>
-              <p className="text-sm text-[#57534E]/70 mt-1">Ipadala ang password reset link sa iyong email</p>
+              <h2 className="text-xl font-bold text-[#57534E]">Reset Password</h2>
+              <p className="text-sm text-[#57534E]/70 mt-1">We'll send a password reset link to your email</p>
             </div>
 
             {/* Notifications */}
@@ -279,19 +279,19 @@ export const LoginForm = () => {
                 <label className="block text-sm font-semibold mb-1.5 text-[#0C0A09]">
                   Email Address <span className="text-[#F97316]">*</span>
                 </label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   required
                   disabled={resetLoading}
                   className="w-full px-4 py-3 border border-[#57534E]/30 rounded-xl focus:outline-none focus:border-[#064E3B] focus:ring-2 focus:ring-[#064E3B]/10 transition duration-200 disabled:bg-[#FAFAF9]"
-                  placeholder="halimbawa@email.com"
+                  placeholder="youremail@email.com"
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
                 />
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={resetLoading}
                 className="w-full bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold py-3.5 rounded-xl transition duration-200 focus:outline-none focus:ring-4 focus:ring-[#064E3B]/20 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-4 shadow-sm cursor-pointer"
               >
@@ -301,21 +301,21 @@ export const LoginForm = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>Ipinapadala...</span>
+                    <span>Sending...</span>
                   </>
                 ) : (
-                  <span>Ipadala ang Link</span>
+                  <span>Send Reset Link</span>
                 )}
               </button>
             </form>
 
             {/* Back to login option */}
             <div className="text-center mt-6 pt-6 border-t border-[#57534E]/10">
-              <button 
+              <button
                 onClick={() => setIsForgotPassword(false)}
                 className="text-sm text-[#064E3B] font-bold hover:underline cursor-pointer"
               >
-                ← Bumalik sa Login
+                ← Back to Login
               </button>
             </div>
           </>

@@ -28,16 +28,16 @@ export const SignupForm = () => {
   }
 
   // Set label and color based on score
-  let label = "Napakababa";
+  let label = "Very Weak";
   let colorClass = "bg-red-500 w-1/4";
   if (score === 2) {
-    label = "Mababa";
+    label = "Weak";
     colorClass = "bg-orange-500 w-2/4";
   } else if (score === 3) {
-    label = "Katamtaman";
+    label = "Moderate";
     colorClass = "bg-yellow-500 w-3/4";
   } else if (score === 4) {
-    label = "Malakas";
+    label = "Strong";
     colorClass = "bg-emerald-600 w-full";
   }
 
@@ -54,35 +54,35 @@ export const SignupForm = () => {
 
     // Input Validation
     if (!formData.fullName.trim()) {
-      setError("Kinakailangan ang buong pangalan.");
+      setError("Full name is required.");
       return;
     }
     if (!formData.email) {
-      setError("Kinakailangan ang email address.");
+      setError("Email address is required.");
       return;
     }
     if (!isValidEmail(formData.email)) {
-      setError("Mangyaring maglagay ng valid na email address.");
+      setError("Please enter a valid email address.");
       return;
     }
     if (!formData.password) {
-      setError("Kinakailangan ang password.");
+      setError("Password is required.");
       return;
     }
     if (formData.password.length < 6) {
-      setError("Ang password ay dapat hindi bababa sa 6 characters.");
+      setError("Password must be at least 6 characters.");
       return;
     }
     if (score < 3) {
-      setError("Mangyaring lakasan ang iyong password (dapat may numero at uppercase letter).");
+      setError("Please strengthen your password (must include a number and an uppercase letter.");
       return;
     }
 
     try {
       setLoading(true);
       await signup(formData.email, formData.password, formData.fullName, formData.role);
-      setSuccess("Matagumpay na nagawa ang account!");
-      
+      setSuccess("Account created successfully!");
+
       // I-redirect base sa piniling role
       setTimeout(() => {
         if (formData.role === "manager") {
@@ -95,13 +95,13 @@ export const SignupForm = () => {
     } catch (err) {
       console.error("Signup error:", err);
       if (err.code === "auth/email-already-in-use") {
-        setError("Ang email na ito ay ginagamit na ng ibang account.");
+        setError("This email is already in use by another account.");
       } else if (err.code === "auth/invalid-email") {
-        setError("Hindi valid ang email address format.");
+        setError("Invalid email address format.");
       } else if (err.code === "auth/weak-password") {
-        setError("Masyadong mahina ang password.");
+        setError("Password is too weak.");
       } else {
-        setError(err.message || "May naganap na error habang nagpaparehistro.");
+        setError(err.message || "An error occurred during registration.");
       }
     } finally {
       setLoading(false);
@@ -112,16 +112,16 @@ export const SignupForm = () => {
     <div className="min-h-screen bg-[#FAFAF9] flex flex-col justify-center items-center px-4 py-8 font-sans text-[#0C0A09]">
       {/* Responsive Card Container */}
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg border border-[#57534E]/10 transition-transform duration-300 hover:scale-[1.01]">
-        
+
         {/* Header */}
         <div className="text-center mb-6">
           <span className="text-[#064E3B] font-extrabold text-3xl tracking-tight block mb-2">
             POS-by-KYUT
           </span>
-          <h2 className="text-xl font-bold text-[#57534E]">Mag-register ng Account</h2>
-          <p className="text-sm text-[#57534E]/70 mt-1">Umpisahan ang pamamahala sa iyong POS system</p>
+          <h2 className="text-xl font-bold text-[#57534E]">Create an Account</h2>
+          <p className="text-sm text-[#57534E]/70 mt-1">Start managing your POS system</p>
         </div>
-        
+
         {/* Notifications */}
         {error && (
           <div className="bg-[#F97316]/10 border border-[#F97316]/20 text-[#F97316] p-4 rounded-xl text-sm mb-5 flex items-start gap-3">
@@ -144,29 +144,29 @@ export const SignupForm = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full Name */}
           <div>
-            <label className="block text-sm font-semibold mb-1.5 text-[#0C0A09]">Buong Pangalan <span className="text-[#F97316]">*</span></label>
-            <input 
-              type="text" 
+            <label className="block text-sm font-semibold mb-1.5 text-[#0C0A09]">Full Name <span className="text-[#F97316]">*</span></label>
+            <input
+              type="text"
               required
               disabled={loading}
               className="w-full px-4 py-2.5 border border-[#57534E]/30 rounded-xl focus:outline-none focus:border-[#064E3B] focus:ring-2 focus:ring-[#064E3B]/10 transition duration-200 disabled:bg-[#FAFAF9]"
               placeholder="Juan Dela Cruz"
               value={formData.fullName}
-              onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
             />
           </div>
 
           {/* Email */}
           <div>
             <label className="block text-sm font-semibold mb-1.5 text-[#0C0A09]">Email Address <span className="text-[#F97316]">*</span></label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               required
               disabled={loading}
               className="w-full px-4 py-2.5 border border-[#57534E]/30 rounded-xl focus:outline-none focus:border-[#064E3B] focus:ring-2 focus:ring-[#064E3B]/10 transition duration-200 disabled:bg-[#FAFAF9]"
-              placeholder="halimbawa@email.com"
+              placeholder="youremail@email.com"
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
 
@@ -174,14 +174,14 @@ export const SignupForm = () => {
           <div>
             <label className="block text-sm font-semibold mb-1.5 text-[#0C0A09]">Password <span className="text-[#F97316]">*</span></label>
             <div className="relative">
-              <input 
-                type={showPassword ? "text" : "password"} 
+              <input
+                type={showPassword ? "text" : "password"}
                 required
                 disabled={loading}
                 className="w-full pl-4 pr-12 py-2.5 border border-[#57534E]/30 rounded-xl focus:outline-none focus:border-[#064E3B] focus:ring-2 focus:ring-[#064E3B]/10 transition duration-200 disabled:bg-[#FAFAF9]"
                 placeholder="******"
                 value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
               {/* Eye/Eye-off toggle */}
               <button
@@ -207,14 +207,14 @@ export const SignupForm = () => {
             {formData.password.length > 0 && (
               <div className="mt-3 space-y-2">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#57534E]">Lakas ng password:</span>
+                  <span className="text-[#57534E]">Password strength:</span>
                   <span className="font-semibold text-[#0C0A09]">{label}</span>
                 </div>
                 {/* Visual strength bar meter */}
                 <div className="w-full h-1.5 bg-[#57534E]/10 rounded-full overflow-hidden">
                   <div className={`h-full transition-all duration-300 ${colorClass}`}></div>
                 </div>
-                
+
                 {/* Checklist criteria */}
                 <div className="grid grid-cols-2 gap-1.5 mt-2">
                   <div className="flex items-center gap-1.5 text-[11px]">
@@ -227,7 +227,7 @@ export const SignupForm = () => {
                     <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-white text-[9px] ${hasNumber ? "bg-emerald-600" : "bg-[#57534E]/30"}`}>
                       ✓
                     </span>
-                    <span className={hasNumber ? "text-emerald-700 font-medium" : "text-[#57534E]/70"}>May numero</span>
+                    <span className={hasNumber ? "text-emerald-700 font-medium" : "text-[#57534E]/70"}>Has a number</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px]">
                     <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-white text-[9px] ${hasUpper ? "bg-emerald-600" : "bg-[#57534E]/30"}`}>
@@ -239,7 +239,7 @@ export const SignupForm = () => {
                     <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-white text-[9px] ${hasLowerOrSpecial ? "bg-emerald-600" : "bg-[#57534E]/30"}`}>
                       ✓
                     </span>
-                    <span className={hasLowerOrSpecial ? "text-emerald-700 font-medium" : "text-[#57534E]/70"}>Lowercase/Simbolo</span>
+                    <span className={hasLowerOrSpecial ? "text-emerald-700 font-medium" : "text-[#57534E]/70"}>Lowercase/Symbol</span>
                   </div>
                 </div>
               </div>
@@ -248,27 +248,27 @@ export const SignupForm = () => {
 
           {/* Role Selector */}
           <div>
-            <label className="block text-sm font-semibold mb-1.5 text-[#0C0A09]">Ano ang iyong Role? <span className="text-[#F97316]">*</span></label>
-            <select 
+            <label className="block text-sm font-semibold mb-1.5 text-[#0C0A09]">What is your Role? <span className="text-[#F97316]">*</span></label>
+            <select
               disabled={loading}
               className="w-full px-4 py-2.5 border border-[#57534E]/30 rounded-xl bg-white focus:outline-none focus:border-[#064E3B] focus:ring-2 focus:ring-[#064E3B]/10 transition duration-200 disabled:bg-[#FAFAF9]"
               value={formData.role}
-              onChange={(e) => setFormData({...formData, role: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
             >
               <option value="manager">Manager / Owner</option>
               <option value="staff">Cashier / Staff</option>
             </select>
             <p className="text-[11px] text-[#57534E]/60 mt-1">
-              {formData.role === "manager" 
-                ? "Maaaring gumawa at mamahala ng iyong sariling mga tindahan."
-                : "Awtomatikong maghihintay ng imbitasyon bago maka-access sa POS."
+              {formData.role === "manager"
+                ? "Can create and manage your own stores."
+                : "Will automatically wait for an invitation before accessing the POS."
               }
             </p>
           </div>
 
           {/* Submit Button */}
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="w-full bg-[#064E3B] hover:bg-[#064E3B]/90 text-white font-bold py-3.5 rounded-xl transition duration-200 focus:outline-none focus:ring-4 focus:ring-[#064E3B]/20 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-5 shadow-sm cursor-pointer"
           >
@@ -278,10 +278,10 @@ export const SignupForm = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>Nagrerehistro...</span>
+                <span>Registering...</span>
               </>
             ) : (
-              <span>Mag-register</span>
+              <span>Create Account</span>
             )}
           </button>
         </form>
@@ -289,9 +289,9 @@ export const SignupForm = () => {
         {/* Redirect Link */}
         <div className="text-center mt-6 pt-6 border-t border-[#57534E]/10">
           <p className="text-sm text-[#57534E]">
-            Mayroon nang account?{" "}
+            Already have an account?{" "}
             <Link to="/login" className="text-[#064E3B] font-bold hover:underline">
-              Mag-login dito
+              Sign in here
             </Link>
           </p>
         </div>
