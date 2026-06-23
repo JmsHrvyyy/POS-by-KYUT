@@ -25,6 +25,12 @@
     margin: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  }
+
+  html.dark body {
+    background-color: #0C0A09;
+    color: #FAFAF9;
   }
 }
 
@@ -59,3 +65,231 @@
     display: none !important;
   }
 }
+
+/* ==========================================
+   GLOBAL PWA DARK MODE OVERRIDES
+   Uses medium/light green accent colors
+   ========================================== */
+
+/* Dark mode basic body */
+html.dark body {
+  background-color: #0C0A09 !important; /* Stone 950 background */
+  color: #FAFAF9 !important; /* Stone 50 text */
+}
+
+/* Background overrides: card components & lists */
+html.dark .bg-white,
+html.dark .bg-stone-50,
+html.dark .bg-\[\#FAFAF9\] {
+  background-color: #1C1917 !important; /* Stone 900 */
+  border-color: rgba(120, 113, 108, 0.2) !important;
+}
+html.dark .bg-\[\#FAFAF9\]\/60 {
+  background-color: rgba(12, 10, 9, 0.6) !important;
+}
+
+/* Accent light green backgrounds */
+html.dark .bg-\[\#064E3B\] {
+  background-color: #059669 !important; /* Emerald 600 (a lively medium-light green) */
+}
+html.dark .bg-\[\#064E3B\]\/10 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+
+/* Text and accent light green text */
+html.dark .text-\[\#064E3B\] {
+  color: #34D399 !important; /* Emerald 400 (light green text) */
+}
+
+/* Text - Stone Color Overrides for Readability */
+html.dark .text-stone-950,
+html.dark .text-stone-900,
+html.dark .text-stone-800,
+html.dark .text-\[\#0C0A09\] {
+  color: #FAFAF9 !important; /* Extremely high contrast */
+}
+html.dark .text-stone-700,
+html.dark .text-stone-600 {
+  color: #D6D3D1 !important; /* Soft, readable gray-white */
+}
+html.dark .text-stone-500,
+html.dark .text-stone-400,
+html.dark .text-\[\#57534E\] {
+  color: #A8A29E !important; /* Secondary text */
+}
+html.dark .text-stone-300 {
+  color: rgba(168, 162, 158, 0.4) !important; /* Muted divider text */
+}
+
+/* Muted secondary text opacity overrides */
+html.dark .text-\[\#57534E\]\/30, html.dark .text-stone-500\/30 { color: rgba(168, 162, 158, 0.3) !important; }
+html.dark .text-\[\#57534E\]\/40, html.dark .text-stone-500\/40 { color: rgba(168, 162, 158, 0.4) !important; }
+html.dark .text-\[\#57534E\]\/50, html.dark .text-stone-500\/50 { color: rgba(168, 162, 158, 0.5) !important; }
+html.dark .text-\[\#57534E\]\/60, html.dark .text-stone-500\/60 { color: rgba(168, 162, 158, 0.6) !important; }
+html.dark .text-\[\#57534E\]\/70, html.dark .text-stone-500\/70 { color: rgba(168, 162, 158, 0.7) !important; }
+html.dark .text-\[\#57534E\]\/80, html.dark .text-stone-500\/80 { color: rgba(168, 162, 158, 0.8) !important; }
+
+/* Status Indicators, Badges, and Text Colors for Success / Warning / Danger */
+html.dark .text-emerald-800,
+html.dark .text-emerald-700,
+html.dark .text-emerald-600,
+html.dark .text-emerald-500 {
+  color: #34D399 !important; /* Emerald 400 */
+}
+html.dark .text-amber-800,
+html.dark .text-amber-700,
+html.dark .text-amber-600,
+html.dark .text-amber-500 {
+  color: #FBBF24 !important; /* Amber 400 */
+}
+html.dark .text-rose-800,
+html.dark .text-rose-700,
+html.dark .text-rose-600,
+html.dark .text-rose-500 {
+  color: #F87171 !important; /* Rose 400 */
+}
+
+/* Background elements for status badges */
+html.dark .bg-emerald-50,
+html.dark .bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+html.dark .bg-amber-50,
+html.dark .bg-amber-500\/10 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+html.dark .bg-rose-50,
+html.dark .bg-rose-500\/10 {
+  background-color: rgba(220, 38, 38, 0.15) !important;
+}
+
+/* Borders */
+html.dark .border-stone-100,
+html.dark .border-stone-200,
+html.dark .border-\[\#57534E\]\/15,
+html.dark .border-\[\#57534E\]\/10,
+html.dark .border-\[\#57534E\]\/25 {
+  border-color: rgba(120, 113, 108, 0.2) !important; /* Soft border color in dark mode */
+}
+html.dark .border-\[\#064E3B\]\/20,
+html.dark .border-emerald-100,
+html.dark .border-emerald-200 {
+  border-color: rgba(52, 211, 153, 0.25) !important;
+}
+html.dark .border-amber-100,
+html.dark .border-amber-200 {
+  border-color: rgba(245, 158, 11, 0.25) !important;
+}
+html.dark .border-rose-100,
+html.dark .border-rose-200 {
+  border-color: rgba(220, 38, 38, 0.25) !important;
+}
+html.dark .border-\[\#064E3B\] {
+  border-color: #34D399 !important;
+}
+html.dark .divide-stone-100 > * + *,
+html.dark .divide-stone-200 > * + * {
+  border-color: rgba(120, 113, 108, 0.15) !important;
+}
+
+/* Background structures */
+html.dark .bg-stone-100 {
+  background-color: #292524 !important; /* Stone 800 */
+}
+html.dark .bg-stone-200 {
+  background-color: #44403C !important; /* Stone 700 */
+}
+
+/* Hovers on tables, lists & badges */
+html.dark .hover\:bg-stone-50:hover,
+html.dark .hover\:bg-stone-100:hover,
+html.dark .hover\:bg-\[\#FAFAF9\]\/50:hover,
+html.dark .hover\:bg-\[\#FAFAF9\]\/40:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+html.dark .hover\:bg-stone-200:hover {
+  background-color: #44403C !important;
+}
+html.dark .hover\:bg-emerald-50:hover,
+html.dark .hover\:bg-emerald-100:hover {
+  background-color: rgba(16, 185, 129, 0.25) !important;
+}
+html.dark .hover\:bg-amber-50:hover,
+html.dark .hover\:bg-amber-100:hover {
+  background-color: rgba(245, 158, 11, 0.25) !important;
+}
+html.dark .hover\:bg-rose-50:hover,
+html.dark .hover\:bg-rose-100:hover {
+  background-color: rgba(220, 38, 38, 0.25) !important;
+}
+
+/* Product list card hover border and group hover colors */
+html.dark .hover\:border-\[\#064E3B\]\/40:hover {
+  border-color: rgba(52, 211, 153, 0.4) !important;
+}
+html.dark .group:hover .group-hover\:text-\[\#064E3B\] {
+  color: #34D399 !important;
+}
+html.dark .group:hover .group-hover\:bg-\[\#064E3B\] {
+  background-color: #059669 !important;
+  color: #ffffff !important;
+}
+html.dark .group:hover .group-hover\:text-white {
+  color: #ffffff !important;
+}
+
+/* Hover transitions */
+html.dark .hover\:bg-\[\#047857\]:hover,
+html.dark hover\:bg-\[\#047857\]:hover {
+  background-color: #10B981 !important; /* Emerald 500 hover state */
+}
+
+/* Gradient overrides */
+html.dark .from-\[\#064E3B\] {
+  --tw-gradient-from: #065F46 !important; /* Emerald 800 */
+}
+html.dark .to-\[\#047857\] {
+  --tw-gradient-to: #059669 !important; /* Emerald 600 */
+}
+
+/* Form element styles */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #0C0A09 !important;
+  color: #FAFAF9 !important;
+  border-color: rgba(120, 113, 108, 0.3) !important;
+}
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: #10B981 !important;
+}
+
+/* Modals & headers */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #FAFAF9 !important;
+}
+html.dark .bg-stone-100 {
+  background-color: #292524 !important; /* Stone 800 */
+}
+
+/* Ensure category tags on product cards remain white background with black text in dark mode */
+html.dark span.bg-white\/90 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #0C0A09 !important;
+}
+
+/* Hide scrollbar for Chrome, Safari, Opera, Edge, Firefox */
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+}
+.scrollbar-none {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
