@@ -765,10 +765,22 @@ export const CashierPOS = ({ embedded = false }) => {
                     }`}
                   >
                     <div
-                      className={`aspect-video w-full rounded-xl flex items-center justify-center bg-gradient-to-br ${categoryGradients[product.category] || "from-rose-400 to-rose-600 shadow-rose-100"} p-4 mb-4 relative overflow-hidden transition-transform duration-500 group-hover:scale-[1.02] shadow-sm`}
+                      className={`aspect-video w-full rounded-xl flex items-center justify-center ${
+                        product.image_url ? "" : `bg-gradient-to-br ${categoryGradients[product.category] || "from-rose-400 to-rose-600 shadow-rose-100"} p-4`
+                      } mb-4 relative overflow-hidden transition-transform duration-500 group-hover:scale-[1.02] shadow-sm`}
                     >
-                      <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      {renderCategoryIcon(product.category)}
+                      {product.image_url ? (
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover rounded-xl"
+                        />
+                      ) : (
+                        <>
+                          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          {renderCategoryIcon(product.category)}
+                        </>
+                      )}
                       <span className="absolute top-2 left-2 text-[9px] uppercase font-extrabold tracking-wider bg-white/90 text-[#0C0A09] px-2 py-0.5 rounded-lg shadow-sm">
                         {product.category}
                       </span>
